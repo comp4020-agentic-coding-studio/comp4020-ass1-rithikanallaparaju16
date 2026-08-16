@@ -1,83 +1,68 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
-A reading-guide to how the work came together --- a map to your process, not an
-essay about it. Markers read this file and follow its citations; they don't
-trawl the repo for evidence you didn't point at, so if a moment mattered, cite
-it.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and each brief adds its own word count and moment count.
-
 ## What I built
 
-One paragraph: the thing, and the idea behind it.
+**After the Bite** is an interactive explainer for one claim: the order you eat
+your food in changes your blood sugar. You build a plate from 78 foods, choose
+what you do for the two hours afterwards, and the page draws two glucose curves
+from that single plate — one where the protein and vegetables go in first, one
+where the carbohydrate does. Same food, same grams, same calories, different
+curve. Underneath is a postprandial model calibrated to published figures rather
+than invented: glycaemic index from Atkinson's 2021 tables, the order effect from
+Shukla's 2019 prediabetes trial, activity effects from walking and stair-climbing
+crossover trials. The hard part was never drawing the curve. It was stopping the
+model from flattering the claim it exists to make.
 
 ## The moments that mattered
 
-Three or four for an assignment; fewer is fine for a weekly prototype. Keep the
-list short so each moment has room to do all four jobs:
+### The model made a 2,700 kcal blowout safer than a snack
 
-1. **what happened** --- the problem, or the thing the agent got wrong
-2. **what you did instead of the obvious thing** --- the call you made, and why
-   it beat the obvious one
-3. **how you knew it was right** --- the check you ran, the viewport you looked
-   at, what you read before accepting the diff
-4. **the citation** --- a commit or commit range, a `CLAUDE.md` change, a check
-   that went from red to green, a prompt paired with the commit it produced
+Before any UI, I wrote a throwaway harness that printed ten reference plates
+against figures from the literature. It immediately showed a huge plate peaking
+at 119 mg/dL and a vending-machine lunch at 148 — backwards. The obvious fix was
+tuning coefficients until the numbers looked right. Instead I read it as a
+*shape* error: my fibre, fat and protein brakes were in absolute grams, so 67 g
+of fat braked a 471 g-carb meal as hard as a 30 g one. I changed the
+representation, not the constants — every brake is now per gram of available
+carbohydrate. That fixed the ordering across all ten plates at once, which is how
+I knew it was the real bug and not a constant that happened to fit
+([`5aebed3`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-rithikanallaparaju16/commit/5aebed3)).
 
-Jobs 2 and 3 are the ones the repo can't tell a reader on its own, so they're
-where the marks are. The strongest moments are the ones where a correction
-landed in the **harness** rather than in another prompt --- a rule added to
-`CLAUDE.md`, a check wired up, an attempt thrown away: re-prompting until it
-passes is the routine case, and changing what the agent works against is the
-skilled one.
+### Making the model less flattering to my own thesis
 
-Cite each moment as a link whose text is the commit hash or range and whose
-target is this repo's commit or compare URL, so a reader clicks straight to the
-evidence:
+The same harness showed one banana getting a 14% benefit from "eating fibre
+first" — incoherent, since you cannot eat a banana's fibre before its own sugar.
+Leaving it would have made my headline effect look bigger. I restricted the
+preload to items a visitor can physically eat first, so the model now says a
+cola, two slices of white bread and a donut get **zero** benefit from reordering.
+That plate is a preset, and its verdict — "the two lines are identical, and that
+is the honest answer" — became the most interesting thing on the page
+([`5aebed3`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-rithikanallaparaju16/commit/5aebed3),
+pinned by a test in
+[`1b828ce`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-rithikanallaparaju16/commit/1b828ce)).
 
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
+### A test that passed with the code deleted
 
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
+With 96 checks green I broke the model on purpose to see if the tests were
+load-bearing. Two mutants failed as expected; the third did not. Deleting the
+hypoglycaemia clamp left all 38 curve tests green, because the reactive dip is
+capped well above 70 and the clamp never fires. Green tests, unguarded invariant.
+So I extracted `clampFloor`, unit-tested it directly, and added a test asserting
+the model keeps *margin* above the floor — a curve sitting on its own clamp is a
+lie about its shape. Each mutant now fails a different test
+([`1b828ce`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-rithikanallaparaju16/commit/1b828ce)).
 
-> the prompt, verbatim
+### Wiring the sensor the roster does not have
 
-Screenshots are welcome where one carries the verification better than a
-sentence does. Commit the file to this repo and link it with a **relative**
-path, which is what makes it render on GitHub: `![alt text](docs/before.png)`.
-Images don't count towards the word count and don't replace the citation.
+`CLAUDE.md` says nothing in the shipped checks measures accessibility and that
+wiring those is my work. Mine computes WCAG contrast from the tokens *as declared
+in `styles.css`*, so it cannot drift from a duplicated palette. It failed 13 of
+28 immediately, including the focus ring — the one thing a keyboard user
+navigates by — at 2.42:1. One failure was my test being wrong, not the design: it
+compared luminance *between* the two curves, the wrong property for categorical
+colour. It now asserts redundant encoding instead: one line dashed, one solid
+([`bb800f1`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-rithikanallaparaju16/commit/bb800f1)).
 
-### A worked moment, for shape
-
-Delete this section along with the rest of the boilerplate --- it's here to show
-the four jobs in one paragraph, not to be imitated in content.
-
-> The date formatter kept coming back with `toLocaleDateString()` and no locale
-> argument, so the same build rendered differently on my machine and in CI. I'd
-> already re-prompted it twice, which fixed the line but not the habit, so the
-> third time I put the rule in `CLAUDE.md` instead
-> ([`3f9ac21`](https://github.com/YOUR-ORG/YOUR-REPO/commit/3f9ac21)) and added
-> a spec test that fails on a bare `toLocaleDateString`. That's what told me it
-> had actually taken: the test went red against the old code and green against
-> the new, and the next two features it wrote passed it without prompting
-> ([`3f9ac21...b7e0d14`](https://github.com/YOUR-ORG/YOUR-REPO/compare/3f9ac21...b7e0d14)).
-
-## Before you ship
-
-`pnpm check:evidence` verifies your citations resolve to real commits, that the
-current reflection entry is in `reflections/`, and that your `CLAUDE.md` is
-there --- before a marker ever opens the file. It checks that your map is
-traceable, not that it is good: the marker judges whether your small,
-deliberately chosen set of moments shows real judgement and reflection. A green
-check is not a substitute for that curation.
-
-Images are deliberately not checked, because whether one renders is visible the
-moment you look. Open this file on GitHub and look at it before you ship.
+All four lessons are now written into `CLAUDE.md`, so the next build here starts
+on the far side of them
+([`5aebed3...bb800f1`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-rithikanallaparaju16/compare/5aebed3...bb800f1)).
