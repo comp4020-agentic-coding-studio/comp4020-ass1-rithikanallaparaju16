@@ -371,7 +371,7 @@ function renderStats(sim: Simulation): void {
         <dl>
           <div class="stat__row"><dt>Peak reached at</dt><dd>${s.peakMin > 0 ? `${s.peakMin} min` : "no rise"}</dd></div>
           <div class="stat__row"><dt>Minutes above ${TARGET_CEILING_MG_DL}</dt><dd>${s.minutesAbove140} min</dd></div>
-          <div class="stat__row"><dt>Glucose above baseline</dt><dd>${integer(s.iaucMgDlMin)} <abbr title="milligrams per decilitre times minutes: the area between the curve and the fasting baseline">mg/dL·min</abbr></dd></div>
+          <div class="stat__row"><dt>Above baseline</dt><dd>${integer(s.iaucMgDlMin)} <abbr title="milligrams per decilitre times minutes: the area between the curve and the fasting baseline">mg/dL·min</abbr></dd></div>
         </dl>
       </div>`;
     })

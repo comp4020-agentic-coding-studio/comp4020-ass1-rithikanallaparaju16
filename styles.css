@@ -1409,6 +1409,7 @@ h1 {
 }
 
 .evidence {
+  max-width: 92ch;
   padding: 12px 14px;
   margin-top: 12px;
   font-size: 13px;
@@ -1805,6 +1806,15 @@ h1 {
     align-items: start;
   }
 
+  .legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px var(--gutter);
+  }
+
+  .activities {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .library__filters {
     flex-flow: row wrap;
     gap: 8px var(--gutter);
@@ -1855,6 +1865,35 @@ h1 {
   .builder {
     grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
     gap: var(--gutter);
+  }
+
+  .activities {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* The numbers and the sentence that interprets them, side by side. Two stat
+     cards stretched across the full width were 580px each of mostly nothing,
+     with the label and its value at opposite ends of the card. */
+  .results {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: var(--stack-sm) var(--gutter);
+    align-items: start;
+  }
+
+  .stats {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .verdict {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: stretch;
+  }
+
+  .table-details {
+    grid-column: 1 / -1;
   }
 
   .meal {

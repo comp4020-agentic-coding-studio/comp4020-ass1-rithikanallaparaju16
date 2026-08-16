@@ -9,7 +9,7 @@ import { resolve } from "node:path";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { FOODS_BY_ID } from "../src/data/foods";
-import { simulate } from "../src/model/glucose";
+import { ACTIVITIES, simulate } from "../src/model/glucose";
 import { renderChart } from "../src/ui/chart";
 
 const DIST = resolve("dist");
@@ -367,5 +367,46 @@ describe("the layout cannot be propped open by its own chart", () => {
     const head = doc.head.innerHTML;
     expect(head).toMatch(/prefers-color-scheme: dark/u);
     expect(head).toMatch(/dataset\.theme/u);
+  });
+});
+
+describe("nothing is wired up twice", () => {
+  it("uses every data-role exactly once", () => {
+    // main.ts resolves roles with querySelector, so a duplicated role silently
+    // binds the first element and orphans the rest. Restructuring the page into
+    // the journey left two `activity-evidence` paragraphs: the first got the
+    // text, the second rendered an empty bordered bar under it and nobody
+    // noticed until a screenshot.
+    const counts = new Map<string, number>();
+    for (const el of doc.querySelectorAll("[data-role]")) {
+      const role = el.getAttribute("data-role") ?? "";
+      counts.set(role, (counts.get(role) ?? 0) + 1);
+    }
+    const duplicated = [...counts.entries()].filter(([, n]) => n > 1);
+    expect(duplicated, `duplicated data-role: ${duplicated.map(([r, n]) => `${r}×${n}`).join(", ")}`).toEqual([]);
+  });
+
+  it("uses every id exactly once", () => {
+    const counts = new Map<string, number>();
+    for (const el of doc.querySelectorAll("[id]")) {
+      const id = el.getAttribute("id") ?? "";
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    const duplicated = [...counts.entries()].filter(([, n]) => n > 1);
+    expect(duplicated, `duplicated id: ${duplicated.map(([r]) => r).join(", ")}`).toEqual([]);
+  });
+
+  it("divides the activity cards evenly across every column count it uses", () => {
+    // Count from the model, not the DOM: the cards are rendered by main.ts, so
+    // the built HTML holds an empty fieldset. Eight activities means 4, 2 and 1
+    // per row all divide evenly, so no breakpoint ends on a half-empty row —
+    // auto-fill gave 5 then 3 at laptop width.
+    const count = ACTIVITIES.length;
+    expect(count % 4, "add or drop an activity and the laptop row goes ragged").toBe(0);
+    const css = readFileSync(resolve("styles.css"), "utf8");
+    for (const cols of [/repeat\(4, minmax\(0, 1fr\)\)/u, /repeat\(2, minmax\(0, 1fr\)\)/u]) {
+      expect(css, `activities need a ${cols} track`).toMatch(cols);
+    }
+    for (const per of [4, 2, 1]) expect(count % per, `${count} does not divide by ${per}`).toBe(0);
   });
 });
