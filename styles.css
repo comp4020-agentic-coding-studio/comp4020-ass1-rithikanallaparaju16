@@ -9,14 +9,17 @@
   --border-strong: #cbd5e1;
   --ink: #0f172a;
   --ink-soft: #475569;
-  --ink-faint: #64748b;
-  --green: #059669;
+  --ink-faint: #5a6779;
+  --green: #047857;
   --green-bright: #10b981;
   --green-wash: #ecfdf5;
   --amber: #b45309;
   --amber-bright: #f59e0b;
   --amber-wash: #fffbeb;
   --red-soft: #fca5a5;
+  --series-carbs: #b45309;
+  --series-protein: #047857;
+  --border-input: #64748b;
   --red-wash: #fef2f2;
   --radius-sm: 4px;
   --radius: 8px;
@@ -81,7 +84,7 @@ a {
 
 :focus-visible {
   border-radius: var(--radius-sm);
-  outline: 3px solid var(--green-bright);
+  outline: 3px solid var(--green);
   outline-offset: 2px;
 }
 
@@ -429,13 +432,13 @@ h1 {
   padding: 13%;
   overflow: hidden;
   background: radial-gradient(
-    circle at 50% 50%,
-    var(--surface) 0 68%,
-    var(--surface-sunk) 69% 100%
+    circle closest-side at 50% 50%,
+    var(--surface) 0 78%,
+    var(--surface-sunk) 79% 100%
   );
   border: 1px solid var(--border-strong);
   border-radius: 50%;
-  box-shadow: var(--shadow-lift), inset 0 0 0 8px var(--surface);
+  box-shadow: var(--shadow-lift), inset 0 0 0 1px rgb(15 23 42 / 4%);
 }
 
 .plate__items {
@@ -684,7 +687,7 @@ h1 {
 }
 
 .activity:focus-within {
-  outline: 3px solid var(--green-bright);
+  outline: 3px solid var(--green);
   outline-offset: 2px;
 }
 
@@ -751,7 +754,7 @@ h1 {
   font-size: 0.85rem;
   color: var(--ink-soft);
   background: var(--surface);
-  border-color: var(--border-strong);
+  border-color: var(--border-input);
 }
 
 .btn--ghost:disabled {
@@ -765,7 +768,7 @@ h1 {
   font-size: 0.78rem;
   color: var(--ink-soft);
   background: var(--surface);
-  border-color: var(--border-strong);
+  border-color: var(--border-input);
 }
 
 .btn--tiny:hover {
@@ -817,11 +820,11 @@ h1 {
 }
 
 .legend__item--carbs .legend__swatch {
-  background: repeating-linear-gradient(to right, var(--amber-bright) 0 6px, transparent 6px 10px);
+  background: repeating-linear-gradient(to right, var(--series-carbs) 0 6px, transparent 6px 10px);
 }
 
 .legend__item--protein .legend__swatch {
-  background: var(--green);
+  background: var(--series-protein);
 }
 
 .chart {
@@ -900,7 +903,7 @@ h1 {
 }
 
 .chart__rule--ceiling {
-  stroke: var(--amber-bright);
+  stroke: var(--series-carbs);
   stroke-dasharray: 5 4;
 }
 
@@ -921,12 +924,12 @@ h1 {
 }
 
 .chart__line--carbs {
-  stroke: var(--amber-bright);
+  stroke: var(--series-carbs);
   stroke-dasharray: 9 5;
 }
 
 .chart__line--protein {
-  stroke: var(--green);
+  stroke: var(--series-protein);
 }
 
 .chart__peak {
@@ -935,11 +938,11 @@ h1 {
 }
 
 .chart__peak--carbs {
-  fill: var(--amber-bright);
+  fill: var(--series-carbs);
 }
 
 .chart__peak--protein {
-  fill: var(--green);
+  fill: var(--series-protein);
 }
 
 .chart__scrub line {
@@ -954,11 +957,11 @@ h1 {
 }
 
 .chart__dot--carbs {
-  fill: var(--amber-bright);
+  fill: var(--series-carbs);
 }
 
 .chart__dot--protein {
-  fill: var(--green);
+  fill: var(--series-protein);
 }
 
 .chart__readout {
@@ -1001,11 +1004,11 @@ h1 {
 }
 
 .stat--carbs {
-  border-left-color: var(--amber-bright);
+  border-left-color: var(--series-carbs);
 }
 
 .stat--protein {
-  border-left-color: var(--green);
+  border-left-color: var(--series-protein);
 }
 
 .stat__big {
@@ -1156,7 +1159,7 @@ h1 {
   font-size: 0.9rem;
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-input);
   border-radius: var(--radius-sm);
 }
 
@@ -1393,6 +1396,16 @@ h1 {
 
   .plate {
     max-width: 360px;
+  }
+
+  .plate__item {
+    width: 2.7rem;
+    height: 2.7rem;
+    font-size: 1.5rem;
+  }
+
+  .plate__items {
+    gap: 0.4rem;
   }
 }
 

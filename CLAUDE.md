@@ -121,6 +121,37 @@ relax one, change the model, not the rule.
   nutrient number flow from that same figure. A gram total that disagrees with
   the unit count printed beside it discredits the whole panel.
 
+### Things that have already caught me here
+
+- **A test that passes when you delete the code it guards is not a test.** The
+  floor-70 sweep went green with the hypoglycaemia clamp removed entirely. Before
+  trusting a new invariant test, break the thing it defends and watch it go red.
+  If it stays green, the test is measuring something else and you need a second
+  one — usually a direct unit test of the guard plus an assertion that the model
+  keeps *margin*, not just compliance.
+- **`[hidden]` loses to any author `display` rule.** It is a user-agent
+  `display: none`, so `display: flex` on the same element silently wins.
+  `styles.css` carries one global `[hidden] { display: none !important; }` and it
+  must stay; everything toggled with `.hidden = true` in `main.ts` depends on it.
+- **Numbers printed near each other must agree when subtracted.** The verdict
+  once said "10 mg/dL off the peak" beside cards reading 143 and 132, because it
+  subtracted raw values while the cards rounded. Round first, then do arithmetic
+  on the rounded figures a reader can see.
+- **Never re-render a container a visitor might be standing in.** Rebuilding the
+  food grid on every add dumped keyboard focus to `<body>`. Update single cards
+  in place, and route anything that must rebuild through `withFocusRestored`.
+- **Size SVG charts in real pixels, not a fixed `viewBox`.** A 760-unit viewBox
+  in a 350 px column renders 11 px labels at about 5 px. The chart measures its
+  container and re-renders from a `ResizeObserver`.
+
+### The sensors this repo adds
+
+Beyond the shipped roster: `spec/contrast.test.ts` computes WCAG 2.1 contrast
+over the palette *as declared in `styles.css`* — it reads the real file rather
+than a copy, because a duplicated palette drifts and then the test is grading a
+colour the site no longer uses. It found 13 failures on its first run, including
+a focus ring at 2.42:1. Performance is still unmeasured; that is the next one.
+
 Two supporting conventions that keep the above honest:
 
 - **Every number in the model traces to a citation.** Foods carry their GI and
