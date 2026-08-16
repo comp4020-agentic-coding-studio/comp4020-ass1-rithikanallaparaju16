@@ -57,6 +57,14 @@
   --shadow-1: 0 4px 6px rgb(15 23 42 / 5%);
   --shadow-2: 0 2px 6px rgb(15 23 42 / 8%), 0 12px 28px rgb(15 23 42 / 7%);
 
+  /* the translucent sticky header, and the plate's category rings */
+  --header-bg: #f7f9fbeb;
+  --primary-hover: #23304d;
+  --cat-protein: #b0567f;
+  --cat-fruit: #c2410c;
+  --cat-sweets: #6d28d9;
+  --cat-fats: #a16207;
+
   /* type */
   --sans: inter, "Segoe UI", system-ui, -apple-system, helvetica, arial, sans-serif;
   --mono: geist, ui-monospace, sfmono-regular, menlo, consolas, monospace;
@@ -64,6 +72,53 @@
   /* measured in main.ts, so anchors clear the sticky chart exactly */
   --header-h: 56px;
   --stage-h: 0px;
+}
+
+/* Dark theme, derived from the same DESIGN.md token set rather than invented.
+   Material's dark convention is what the frontmatter is already shaped for:
+   the inverse-* pair becomes the ground and the ink, and the *-fixed-dim tones
+   become the accents that were solid in light.
+
+   - background/surface  ← inverse-surface #2d3133 and darker steps of it
+   - on-surface          ← inverse-on-surface #eff1f3
+   - primary             ← inverse-primary #bec6e0 on on-primary-fixed #131b2e
+   - secondary           ← secondary-fixed-dim #4edea3 on on-secondary-fixed
+   - tertiary            ← tertiary-fixed-dim #ffb95f, text tertiary-fixed
+   - the GI tag flips to on-tertiary-fixed-variant #653e00 as its ground
+
+   contrast.test.ts runs every pair against BOTH themes, so neither can drift. */
+:root[data-theme="dark"] {
+  --background: #16191b;
+  --surface: #22262a;
+  --surface-low: #1c2022;
+  --surface-container: #2d3133;
+  --surface-variant: #3a3f42;
+  --on-surface: #eff1f3;
+  --on-surface-variant: #c1c6c9;
+  --outline: #8b9196;
+  --outline-variant: #4a5054;
+  --primary: #bec6e0;
+  --on-primary: #131b2e;
+  --secondary: #4edea3;
+  --on-secondary: #002113;
+  --tertiary: #ffb95f;
+  --tertiary-text: #ffddb8;
+  --tertiary-fixed: #4a2f08;
+  --error: #ffb4ab;
+  --error-container: #4a1512;
+  --series-protein: #4edea3;
+  --series-carbs: #ffb95f;
+  --band-target: #13241e;
+  --band-spike: #2a2115;
+  --band-hypo: #2a1618;
+  --shadow-1: 0 4px 6px rgb(0 0 0 / 30%);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 35%), 0 12px 28px rgb(0 0 0 / 30%);
+  --header-bg: #16191beb;
+  --primary-hover: #d5dbf0;
+  --cat-protein: #f0a3c4;
+  --cat-fruit: #ff9b6a;
+  --cat-sweets: #c0a6ff;
+  --cat-fats: #e0b04a;
 }
 
 *,
@@ -157,7 +212,7 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 8px var(--margin-mobile);
-  background: rgb(247 249 251 / 92%);
+  background: var(--header-bg);
   border-bottom: 1px solid var(--surface-variant);
   backdrop-filter: blur(8px);
 }
@@ -203,35 +258,119 @@ a {
   color: var(--secondary);
 }
 
-/* One row on a phone: the nav scrolls sideways rather than wrapping, which
-   keeps --header-h predictable for everything sticky underneath it. */
-.site-nav {
+.site-header__tools {
   display: flex;
-  flex: 1 1 auto;
-  gap: 16px;
-  justify-content: flex-start;
-  min-width: 0;
-  overflow-x: auto;
-  font-size: 13px;
-  font-weight: 600;
-  scrollbar-width: none;
+  flex: none;
+  order: 2;
+  gap: 4px;
+  align-items: center;
 }
 
-.site-nav::-webkit-scrollbar {
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  font: inherit;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.icon-btn:hover {
+  color: var(--on-surface);
+  background: var(--surface-container);
+}
+
+.icon-btn__glyph {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.nav-toggle__bars,
+.nav-toggle__bars::before,
+.nav-toggle__bars::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentcolor;
+  border-radius: 2px;
+}
+
+.nav-toggle__bars {
+  position: relative;
+}
+
+.nav-toggle__bars::before,
+.nav-toggle__bars::after {
+  position: absolute;
+  left: 0;
+  content: "";
+}
+
+.nav-toggle__bars::before {
+  top: -6px;
+}
+
+.nav-toggle__bars::after {
+  top: 6px;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars {
+  background: transparent;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::before,
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::after {
+  top: 0;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::before {
+  transform: rotate(45deg);
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::after {
+  transform: rotate(-45deg);
+}
+
+/* On a phone the nav is a panel the burger opens. Five links wrapped across
+   two rows made the header 98px tall, which every sticky thing below it then
+   had to work around. */
+.site-nav {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
   display: none;
+  flex-direction: column;
+  order: 1;
+  padding: 4px var(--margin-mobile) 12px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--background);
+  border-bottom: 1px solid var(--surface-variant);
+  box-shadow: var(--shadow-2);
+}
+
+.site-nav[data-open="true"] {
+  display: flex;
 }
 
 .site-nav a {
-  padding: 4px 0;
+  padding: 10px 0;
   color: var(--on-surface-variant);
   text-decoration: none;
-  white-space: nowrap;
-  border-bottom: 2px solid transparent;
+  border-bottom: 1px solid var(--surface-variant);
+}
+
+.site-nav a:last-child {
+  border-bottom: 0;
 }
 
 .site-nav a:hover {
   color: var(--secondary);
-  border-bottom-color: var(--secondary);
 }
 
 /* -------------------------------------------------------------------- main */
@@ -243,8 +382,38 @@ main {
 }
 
 .hero {
-  max-width: 30em;
-  padding: var(--stack-md) 0 var(--stack-sm);
+  padding: var(--stack-lg) 0 var(--stack-md);
+}
+
+/* A short map of the page, so the top orients before it asks for anything. */
+.hero__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 32px;
+  padding-top: var(--stack-sm);
+  margin-top: var(--stack-md);
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  border-top: 1px solid var(--surface-variant);
+}
+
+.hero__steps li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.hero__step-num {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--on-surface);
+  background: var(--surface-container);
+  border-radius: var(--radius-full);
 }
 
 .eyebrow,
@@ -268,6 +437,7 @@ main {
 }
 
 h1 {
+  max-width: 22ch;
   font-size: 32px;
   font-weight: 700;
   line-height: 40px;
@@ -276,6 +446,7 @@ h1 {
 }
 
 .lede {
+  max-width: 58ch;
   margin-top: var(--stack-sm);
   font-size: 18px;
   line-height: 28px;
@@ -286,10 +457,14 @@ h1 {
 
 .studio {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--stack-md);
   align-items: start;
   padding-bottom: var(--stack-lg);
+}
+
+.studio > * {
+  min-width: 0;
 }
 
 .studio__input {
@@ -319,6 +494,7 @@ h1 {
    a chart you have to scroll back to is not a centrepiece. */
 .stage {
   position: sticky;
+  min-width: 0;
   top: var(--header-h);
   z-index: 10;
   padding: 8px 8px 2px;
@@ -357,6 +533,8 @@ h1 {
 }
 
 .chart__svg {
+  position: absolute;
+  inset: 0;
   display: block;
 }
 
@@ -754,11 +932,20 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--surface-variant);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
+}
+
+.meal__plate,
+.meal__figures {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
 /* DESIGN.md, Shapes: the plate is a perfect circle, the one outlier in the
@@ -823,7 +1010,7 @@ h1 {
 }
 
 .plate__item--protein {
-  border-color: #b0567f;
+  border-color: var(--cat-protein);
 }
 
 .plate__item--carbs {
@@ -835,15 +1022,15 @@ h1 {
 }
 
 .plate__item--fruit {
-  border-color: #c2410c;
+  border-color: var(--cat-fruit);
 }
 
 .plate__item--sweets {
-  border-color: #6d28d9;
+  border-color: var(--cat-sweets);
 }
 
 .plate__item--fats {
-  border-color: #a16207;
+  border-color: var(--cat-fats);
 }
 
 .plate__item--more {
@@ -1235,7 +1422,7 @@ h1 {
 }
 
 .btn--primary:hover {
-  background: #23304d;
+  background: var(--primary-hover);
 }
 
 .btn--ghost,
@@ -1534,7 +1721,7 @@ h1 {
 
 /* -------------------------------------------------------------- responsive */
 
-@media (width >= 700px) {
+@media (width >= 640px) {
   main,
   .site-footer {
     padding-right: var(--gutter);
@@ -1546,10 +1733,30 @@ h1 {
     line-height: 56px;
   }
 
+  .nav-toggle {
+    display: none;
+  }
+
   .site-nav {
-    justify-content: flex-end;
-    overflow-x: visible;
+    position: static;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    padding: 0;
     font-size: 14px;
+    background: none;
+    border-bottom: 0;
+    box-shadow: none;
+  }
+
+  .site-nav a {
+    padding: 4px 0;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+  }
+
+  .site-nav a:hover {
+    border-bottom-color: var(--secondary);
   }
 
   .brand__mark {
@@ -1572,6 +1779,15 @@ h1 {
     justify-content: space-between;
   }
 
+  /* On a tablet the meal card has width to spare, so the plate sits beside its
+     numbers instead of floating alone in the middle of an empty row. */
+  .meal {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 16px var(--gutter);
+    align-items: start;
+  }
+
   .trend-layout {
     grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
   }
@@ -1583,20 +1799,14 @@ h1 {
 
 /* DESIGN.md, Layout: 12-column grid at 1200px+, plate on the left 5 columns,
    glucose curve on the right 7. The curve column is the sticky one. */
-@media (width >= 1080px) {
+@media (width >= 1120px) {
   .studio {
     grid-template-columns: 5fr 7fr;
     gap: 0 var(--gutter);
   }
 
-  .hero {
-    grid-row: 1;
-    grid-column: 1;
-    padding-top: var(--stack-lg);
-  }
-
   .studio__input {
-    grid-row: 2;
+    grid-row: 1;
     grid-column: 1;
   }
 
@@ -1608,12 +1818,11 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: var(--stack-md);
-    grid-row: 1 / span 2;
+    grid-row: 1;
     grid-column: 2;
     align-self: start;
     min-width: 0;
     max-height: calc(100vh - var(--header-h) - 32px);
-    margin-top: var(--stack-lg);
     overflow-y: auto;
   }
 
@@ -1632,8 +1841,12 @@ h1 {
     height: clamp(240px, 34vh, 380px);
   }
 
+  .meal {
+    display: flex;
+  }
+
   .plate {
-    max-width: 260px;
+    max-width: 250px;
   }
 }
 

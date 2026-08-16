@@ -82,6 +82,9 @@ const dom = {
   clear: ref<HTMLButtonElement>("clear"),
   activities: ref<HTMLFieldSetElement>("activities"),
   activityEvidence: ref("activity-evidence"),
+  theme: ref<HTMLButtonElement>("theme"),
+  themeGlyph: ref("theme-glyph"),
+  navToggle: ref<HTMLButtonElement>("nav-toggle"),
   run: ref<HTMLButtonElement>("run"),
   runHint: ref("run-hint"),
   stage: ref("stage"),
@@ -711,6 +714,67 @@ dom.profile.addEventListener("input", readProfile);
 dom.profile.addEventListener("change", readProfile);
 dom.profile.addEventListener("submit", (event) => event.preventDefault());
 
+// -------------------------------------------------------- theme and the menu
+
+/**
+ * The theme is already set on <html> by a tiny inline script in the head, so
+ * there is no white flash before this module loads. This only handles the
+ * toggle and keeps the button's label honest — an icon-only control needs its
+ * accessible name to say what pressing it will *do*, not what it currently is.
+ */
+function applyTheme(theme: "light" | "dark"): void {
+  document.documentElement.dataset.theme = theme;
+  const next = theme === "dark" ? "light" : "dark";
+  dom.theme.setAttribute("aria-label", `Switch to ${next} theme`);
+  dom.themeGlyph.textContent = theme === "dark" ? "☀" : "☾";
+  try {
+    localStorage.setItem("atb-theme", theme);
+  } catch {
+    // Private browsing: the toggle still works for this session.
+  }
+  // Both themes redraw the same geometry, but the SVG picks its colours up from
+  // CSS variables, so nothing needs re-rendering here.
+}
+
+dom.theme.addEventListener("click", () => {
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+});
+
+const siteNav = document.getElementById("site-nav");
+
+function setMenu(open: boolean): void {
+  if (!siteNav) return;
+  dom.navToggle.setAttribute("aria-expanded", String(open));
+  dom.navToggle.setAttribute("aria-label", open ? "Close the menu" : "Open the menu");
+  siteNav.dataset.open = String(open);
+  measureChrome();
+}
+
+dom.navToggle.addEventListener("click", () => {
+  const open = dom.navToggle.getAttribute("aria-expanded") !== "true";
+  setMenu(open);
+  // Opening a panel that sits before its trigger in the DOM would otherwise
+  // send the next Tab backwards past it.
+  if (open) siteNav?.querySelector<HTMLAnchorElement>("a")?.focus();
+});
+
+siteNav?.addEventListener("click", (event) => {
+  if ((event.target as HTMLElement).closest("a")) setMenu(false);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || dom.navToggle.getAttribute("aria-expanded") !== "true") return;
+  setMenu(false);
+  dom.navToggle.focus();
+});
+
+document.addEventListener("click", (event) => {
+  if (dom.navToggle.getAttribute("aria-expanded") !== "true") return;
+  const target = event.target as HTMLElement;
+  if (target.closest(".site-header")) return;
+  setMenu(false);
+});
+
 // ----------------------------------------------------------------- lifecycle
 
 /**
@@ -754,6 +818,7 @@ buildPresets();
 buildActivities();
 updateActivitySelection();
 buildProfileSelects();
+applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 measureChrome();
 renderCurve();
 

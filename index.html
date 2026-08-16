@@ -7,13 +7,27 @@
       name="description"
       content="Build a meal, choose what you do afterwards, and watch two blood-glucose curves diverge — one where you eat the protein and fibre first, one where you eat the carbs and sugar first."
     />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
     <title>After the Bite — the order you eat in changes your blood sugar</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 25C8 25 8.5 7 15 7s7 16 15 16' fill='none' stroke='%23006c49' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <script>
+      // Set the theme before first paint, so a dark-mode visitor never gets a
+      // white flash. Everything else about the toggle lives in main.ts.
+      (function () {
+        try {
+          var saved = localStorage.getItem("atb-theme");
+          document.documentElement.dataset.theme =
+            saved ||
+            (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#studio">Skip to the simulator</a>
@@ -38,7 +52,27 @@
         </svg>
         <span class="brand__name">After the <span class="brand__name-em">Bite</span></span>
       </a>
-      <nav class="site-nav" aria-label="Primary">
+      <div class="site-header__tools">
+        <button
+          type="button"
+          class="icon-btn"
+          data-role="theme"
+          aria-label="Switch to dark theme"
+        >
+          <span class="icon-btn__glyph" data-role="theme-glyph" aria-hidden="true">◐</span>
+        </button>
+        <button
+          type="button"
+          class="icon-btn nav-toggle"
+          data-role="nav-toggle"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          aria-label="Open the menu"
+        >
+          <span class="nav-toggle__bars" aria-hidden="true"></span>
+        </button>
+      </div>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
         <a href="#studio">Simulator</a>
         <a href="#plate">Plate</a>
         <a href="#after">Afterwards</a>
@@ -53,17 +87,22 @@
            the glucose curve the right 7. The curve panel is sticky, so the two
            lines stay on screen the whole time you are building the meal that
            moves them. That is the entire point of the page. -->
-      <div class="studio" id="studio">
-        <section class="hero">
-          <p class="eyebrow">An interactive explainer</p>
-          <h1>The order you eat your food in changes your blood sugar.</h1>
-          <p class="lede">
-            Not what you eat. Not how much. The <em>order</em>. Eat the vegetables and the chicken
-            before you touch the rice and the spike that follows is around a third smaller than if
-            you had started with the rice — same meal, same grams, same calories.
-          </p>
-        </section>
+      <section class="hero">
+        <p class="eyebrow">An interactive explainer</p>
+        <h1>The order you eat your food in changes your blood sugar.</h1>
+        <p class="lede">
+          Not what you eat. Not how much. The <em>order</em>. Eat the vegetables and the chicken
+          before you touch the rice, and the spike that follows is around a third smaller than if
+          you had started with the rice — same meal, same grams, same calories.
+        </p>
+        <ol class="hero__steps">
+          <li><span class="hero__step-num" aria-hidden="true">1</span> Build a meal</li>
+          <li><span class="hero__step-num" aria-hidden="true">2</span> Choose what you do next</li>
+          <li><span class="hero__step-num" aria-hidden="true">3</span> Watch both curves</li>
+        </ol>
+      </section>
 
+      <div class="studio" id="studio">
         <div class="studio__output">
           <div class="stage" data-role="stage">
             <div class="stage__head">
@@ -142,7 +181,8 @@
             </p>
 
             <div class="meal">
-              <div class="plate">
+              <div class="meal__plate">
+                <div class="plate">
                 <div class="plate__rim">
                   <p class="plate__empty" data-role="plate-empty">
                     <span class="plate__empty-icon" aria-hidden="true">🍽️</span>
@@ -152,19 +192,22 @@
                        grams, in the tally below. -->
                   <ul class="plate__items" data-role="plate-items" aria-hidden="true"></ul>
                 </div>
+                </div>
+                <p class="plate__total" data-role="plate-total" aria-live="polite"></p>
               </div>
-              <p class="plate__total" data-role="plate-total" aria-live="polite"></p>
 
-              <ul class="tally__items" data-role="tally-items"></ul>
+              <div class="meal__figures">
+                <ul class="tally__items" data-role="tally-items"></ul>
               <p class="tally__empty" data-role="tally-empty">
                 Grams here are always the number of serves times that food's serve weight. The panel
                 shows you both numbers so you can check the arithmetic yourself.
               </p>
-              <dl class="macros" data-role="macros"></dl>
-              <div class="meal__actions">
-                <button type="button" class="btn btn--ghost" data-role="clear" disabled>
-                  Clear the plate
-                </button>
+                <dl class="macros" data-role="macros"></dl>
+                <div class="meal__actions">
+                  <button type="button" class="btn btn--ghost" data-role="clear" disabled>
+                    Clear the plate
+                  </button>
+                </div>
               </div>
             </div>
 

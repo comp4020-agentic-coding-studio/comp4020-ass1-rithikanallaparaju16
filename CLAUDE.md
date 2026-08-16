@@ -143,6 +143,21 @@ relax one, change the model, not the rule.
 - **Size SVG charts in real pixels, not a fixed `viewBox`.** A 760-unit viewBox
   in a 350 px column renders 11 px labels at about 5 px. The chart measures its
   container and re-renders from a `ResizeObserver`.
+- **…and then take that SVG out of flow.** The corollary bit hard: an `<svg>`
+  with a literal `width` attribute, sitting in flow, holds its container open at
+  the *last* width it was drawn at. Shrink the viewport and the stale width
+  props the grid to 976 px inside a 768 px window — and the `ResizeObserver`
+  never fires to fix it, because its own content is what stops the box getting
+  narrower. A render loop that can deadlock against its own output is worth the
+  three lines: `.chart__frame { position: relative; overflow: hidden }` and
+  `.chart__svg { position: absolute; inset: 0 }`.
+- **Grid and flex children default to `min-width: auto`.** That is min-content,
+  so one wide child widens the whole column. `minmax(0, 1fr)` on the track and
+  `min-width: 0` on the items, every time.
+- **A second theme is a sensor, not a feature.** Adding dark mode immediately
+  found six colours that had escaped the token layer — including the sticky
+  header, which turned the brand name invisible. If a value is not a token, a
+  theme switch is how you find out.
 
 ### The sensors this repo adds
 

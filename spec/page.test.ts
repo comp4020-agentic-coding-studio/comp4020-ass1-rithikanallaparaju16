@@ -269,3 +269,51 @@ describe("the chart is the centrepiece, per DESIGN.md", () => {
     expect(svg).not.toMatch(/chart__label--carbs/u);
   });
 });
+
+describe("the layout cannot be propped open by its own chart", () => {
+  const css = readFileSync(resolve("styles.css"), "utf8");
+
+  it("keeps the chart SVG out of flow", () => {
+    // renderChart writes a literal `width` attribute on the <svg>. While that
+    // SVG was in flow, shrinking the viewport left a stale width holding the
+    // grid open — 976px of content in a 768px window — and the ResizeObserver
+    // could never fire to correct it, because its own content was stopping the
+    // box from ever getting narrower. Out of flow, the frame's width is decided
+    // by the grid track alone and the deadlock cannot form.
+    const frame = /\.chart__frame\s*\{([^}]*)\}/u.exec(css)?.[1] ?? "";
+    const svg = /\.chart__svg\s*\{([^}]*)\}/u.exec(css)?.[1] ?? "";
+    expect(frame).toMatch(/position:\s*relative/u);
+    expect(frame).toMatch(/overflow:\s*hidden/u);
+    expect(svg, "the SVG must not contribute to its container's width").toMatch(
+      /position:\s*absolute/u,
+    );
+  });
+
+  it("stops any grid child resolving to its min-content width", () => {
+    expect(css).toMatch(/\.studio\s*>\s*\*\s*\{[^}]*min-width:\s*0/u);
+    expect(css).toMatch(/\.studio\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+  });
+
+  it("collapses the nav into a menu button on a phone", () => {
+    const toggle = doc.querySelector('[data-role="nav-toggle"]');
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle?.getAttribute("aria-controls")).toBe("site-nav");
+    expect(doc.getElementById("site-nav"), "aria-controls must point at something").toBeTruthy();
+    expect(toggle?.getAttribute("aria-label"), "an icon button needs a name").toBeTruthy();
+    // Hidden once there is room for the links themselves.
+    expect(css).toMatch(/\.nav-toggle\s*\{[^}]*display:\s*none/u);
+  });
+
+  it("ships a theme toggle and a flash-free default", () => {
+    const toggle = doc.querySelector('[data-role="theme"]');
+    expect(toggle?.getAttribute("aria-label")).toMatch(/switch to/iu);
+    expect(doc.querySelector('meta[name="color-scheme"]')?.getAttribute("content")).toBe(
+      "light dark",
+    );
+    // The theme is set on <html> before the stylesheet paints, so a dark-mode
+    // visitor never sees a white flash on load.
+    const head = doc.head.innerHTML;
+    expect(head).toMatch(/prefers-color-scheme: dark/u);
+    expect(head).toMatch(/dataset\.theme/u);
+  });
+});

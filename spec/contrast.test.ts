@@ -13,20 +13,28 @@ import { describe, expect, it } from "vitest";
 
 const css = readFileSync(resolve("styles.css"), "utf8");
 
-function tokens(): Map<string, string> {
-  const root = /:root\s*\{([\s\S]*?)\n\}/u.exec(css);
-  if (!root) throw new Error("no :root block in styles.css");
+function tokens(block: RegExp): Map<string, string> {
   const found = new Map<string, string>();
-  for (const match of root[1].matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{3,8});/gu)) {
-    found.set(match[1], match[2]);
+  const match = block.exec(css);
+  if (!match) throw new Error(`no block matching ${block} in styles.css`);
+  for (const decl of match[1].matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{3,8});/gu)) {
+    found.set(decl[1], decl[2]);
   }
   return found;
 }
 
-const PALETTE = tokens();
+const LIGHT = tokens(/:root\s*\{([\s\S]*?)\n\}/u);
+// Dark only overrides part of the set, so it inherits everything else — which
+// is exactly how the browser resolves it, and means a token the dark block
+// forgot is caught here rather than by a visitor.
+const DARK = new Map([...LIGHT, ...tokens(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/u)]);
+const THEMES: [string, Map<string, string>][] = [
+  ["light", LIGHT],
+  ["dark", DARK],
+];
 
-function hex(name: string): string {
-  const value = PALETTE.get(name);
+function hex(palette: Map<string, string>, name: string): string {
+  const value = palette.get(name);
   if (!value) throw new Error(`--${name} is not declared in styles.css`);
   return value;
 }
@@ -91,17 +99,33 @@ const NON_TEXT: [string, string, string][] = [
   ["an input or button border", "outline", "surface"],
 ];
 
-describe("colour contrast (WCAG 2.1 AA)", () => {
+describe.each(THEMES)("colour contrast in %s (WCAG 2.1 AA)", (theme, palette) => {
   it.each([...NORMAL_TEXT, ...ON_FILL])("%s clears 4.5:1", (_what, fg, bg) => {
-    const ratio = contrast(hex(fg), hex(bg));
-    expect(ratio, `${hex(fg)} on ${hex(bg)} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+    const ratio = contrast(hex(palette, fg), hex(palette, bg));
+    expect(
+      ratio,
+      `${theme}: ${hex(palette, fg)} on ${hex(palette, bg)} is ${ratio.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it.each(NON_TEXT)("%s clears 3:1", (_what, fg, bg) => {
-    const ratio = contrast(hex(fg), hex(bg));
-    expect(ratio, `${hex(fg)} on ${hex(bg)} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+    const ratio = contrast(hex(palette, fg), hex(palette, bg));
+    expect(
+      ratio,
+      `${theme}: ${hex(palette, fg)} on ${hex(palette, bg)} is ${ratio.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(3);
   });
 
+  it("defines every token the other theme relies on", () => {
+    // A dark block that silently drops a token inherits a light one, and the
+    // result is a light-on-light card nobody notices until a screenshot.
+    for (const name of ["background", "surface", "on-surface", "series-carbs", "series-protein"]) {
+      expect(palette.has(name), `${theme} is missing --${name}`).toBe(true);
+    }
+  });
+});
+
+describe("colour, structurally", () => {
   it("tells the two curves apart without using colour at all", () => {
     // This started out asserting a luminance ratio between the two series and
     // failed at 1.09:1 — correctly, but for the wrong reason. Two categorical
