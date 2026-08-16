@@ -61,6 +61,13 @@ export const WINDOW_MIN = 180;
 /** Minutes between sampled points. 180/2 + 1 = 91 points per series. */
 export const SAMPLE_STEP_MIN = 2;
 
+/**
+ * Real curves undershoot baseline slightly after a big rise. Capped, because
+ * baseline minus this cap is the lowest value the model can structurally
+ * produce — and that has to stay clear of the 70 mg/dL floor.
+ */
+const MAX_REACTIVE_DIP_MG_DL = 14;
+
 /** The excursion is tapered to exactly zero across this window. */
 const TAPER_START_MIN = 150;
 
@@ -371,6 +378,19 @@ function activityFactor(t: number, activity: Activity): number {
   return 1 - activity.disposalEffect * ramp;
 }
 
+/**
+ * The hypoglycaemia guard. Exported and named so a test can prove it works:
+ * the exhaustive sweep over every plate passes even with this deleted, because
+ * the reactive dip is capped at 14 mg/dL below a 90 mg/dL baseline and so cannot
+ * reach 70 by construction. That makes the clamp defence-in-depth against a
+ * future change to those constants rather than something load-bearing today —
+ * and it is exactly why `spec/curve.test.ts` tests both this function directly
+ * and the margin the model keeps above the floor.
+ */
+export function clampFloor(mgdl: number): number {
+  return Math.max(HYPO_FLOOR_MG_DL, mgdl);
+}
+
 /** The gamma peak function: exactly 1 at t = tp, 0 at t ≤ 0. */
 function gammaPulse(t: number, tp: number, k: number): number {
   if (t <= 0) return 0;
@@ -461,7 +481,7 @@ function buildSeries(input: SimulationInput, order: EatingOrder, totals: Nutrien
 
   // Real curves undershoot baseline a little on the way down after a big rise.
   // Small, late, and bounded — the clamp is the backstop, not the mechanism.
-  const dipAmplitude = Math.min(14, 0.11 * peakAmplitude);
+  const dipAmplitude = Math.min(MAX_REACTIVE_DIP_MG_DL, 0.11 * peakAmplitude);
   const dipPeakMin = Math.min(150, 2.2 * (pulses[0]?.peakMin ?? 45));
 
   const points: SeriesPoint[] = [];
@@ -474,7 +494,7 @@ function buildSeries(input: SimulationInput, order: EatingOrder, totals: Nutrien
     const rise = pulses.reduce((sum, p) => sum + p.amplitude * gammaPulse(t, p.peakMin, p.sharpness), 0);
     const dip = dipAmplitude * gammaPulse(t, dipPeakMin, 4);
     const excursion = (rise - dip) * activityFactor(t, activity) * taper(t);
-    const mgdl = Math.max(HYPO_FLOOR_MG_DL, BASELINE_MG_DL + excursion);
+    const mgdl = clampFloor(BASELINE_MG_DL + excursion);
 
     points.push({ minutes: t, mgdl });
     if (mgdl > peakMgDl) {

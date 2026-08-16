@@ -1,0 +1,200 @@
+// What the deployed page must contain, checked against the BUILT site.
+//
+// These are the brief's checkable lines, not implementation details: the visitor
+// can act, the two curves are both present and named, the numbers are sourced,
+// and nothing on the page reaches off-origin for a resource it needs.
+
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { JSDOM } from "jsdom";
+import { describe, expect, it } from "vitest";
+
+const DIST = resolve("dist");
+const doc = new JSDOM(readFileSync(resolve(DIST, "index.html"), "utf8")).window.document;
+
+function text(): string {
+  return doc.body.textContent?.replace(/\s+/gu, " ") ?? "";
+}
+
+describe("the deployed page", () => {
+  it("names itself and says what it is", () => {
+    expect(doc.title).toMatch(/After the Bite/iu);
+    expect(doc.querySelector('meta[name="description"]')?.getAttribute("content") ?? "").toMatch(
+      /glucose/iu,
+    );
+  });
+
+  it("carries the logo as inline SVG with a glucose curve in it", () => {
+    const mark = doc.querySelector(".brand__mark");
+    expect(mark, "the wordmark must be inline SVG, not an image request").toBeTruthy();
+    expect(mark?.tagName.toLowerCase()).toBe("svg");
+    // A curve rising off a baseline: the mark is the thing the page explains.
+    expect(mark?.querySelector(".brand__curve")?.getAttribute("d") ?? "").toMatch(/^M/u);
+    expect(mark?.querySelector(".brand__base")).toBeTruthy();
+    expect(doc.querySelector(".brand__name")?.textContent?.replace(/\s+/gu, " ").trim()).toBe(
+      "After the Bite",
+    );
+  });
+
+  it("has a skip link to the content", () => {
+    const skip = doc.querySelector<HTMLAnchorElement>(".skip-link");
+    expect(skip?.getAttribute("href")).toBe("#main");
+    expect(doc.querySelector("#main")).toBeTruthy();
+  });
+});
+
+describe("the visitor can do something that changes what they see", () => {
+  it("gives them a food library, a plate and a tally to build a meal in", () => {
+    for (const role of ["categories", "food-grid", "plate-items", "tally-items", "macros", "clear"]) {
+      expect(doc.querySelector(`[data-role="${role}"]`), `[data-role="${role}"]`).toBeTruthy();
+    }
+  });
+
+  it("lets them filter the library to vegetarian or vegan", () => {
+    const diets = [...doc.querySelectorAll("[data-diet]")].map((b) => b.getAttribute("data-diet"));
+    expect(diets).toEqual(expect.arrayContaining(["all", "vegetarian", "vegan"]));
+  });
+
+  it("offers presets so the point survives a visitor in a hurry", () => {
+    expect(doc.querySelector('[data-role="presets"]')).toBeTruthy();
+  });
+
+  it("lets them choose what happens after the meal, without requiring it", () => {
+    expect(doc.querySelector('[data-role="activities"]')?.tagName.toLowerCase()).toBe("fieldset");
+    expect(doc.querySelector('[data-role="activities"] legend')).toBeTruthy();
+    expect(text()).toMatch(/Sitting is the control condition and it is already selected/iu);
+  });
+
+  it("has one button that draws the curve", () => {
+    const run = doc.querySelector<HTMLButtonElement>('[data-role="run"]');
+    expect(run).toBeTruthy();
+    expect(run?.getAttribute("type")).toBe("button");
+    expect(run?.textContent?.trim()).toBeTruthy();
+  });
+
+  it("hides the curve panel until it is asked for", () => {
+    expect(doc.querySelector('[data-role="curve-panel"]')?.hasAttribute("hidden")).toBe(true);
+  });
+});
+
+describe("the chart", () => {
+  it("gives the visitor a focusable, described chart region", () => {
+    const frame = doc.querySelector('[data-role="chart"]');
+    expect(frame?.getAttribute("tabindex")).toBe("0");
+    const describedBy = frame?.getAttribute("aria-describedby") ?? "";
+    expect(describedBy).toBeTruthy();
+    expect(doc.getElementById(describedBy)?.textContent ?? "").toMatch(/arrow keys/iu);
+  });
+
+  it("names both series in the legend, and says what makes them differ", () => {
+    const legend = doc.querySelector(".legend")?.textContent?.replace(/\s+/gu, " ") ?? "";
+    expect(legend).toMatch(/Carbs & sugar first/iu);
+    expect(legend).toMatch(/Protein & fibre first/iu);
+  });
+
+  it("offers the same numbers as text for anyone who cannot use the picture", () => {
+    expect(doc.querySelector('[data-role="curve-table"]')?.tagName.toLowerCase()).toBe("table");
+    expect(doc.querySelector(".table-details summary")?.textContent ?? "").toMatch(/table/iu);
+  });
+
+  it("has somewhere to put the scrubbed reading, announced politely", () => {
+    expect(doc.querySelector('[data-role="readout"]')?.getAttribute("aria-live")).toBe("polite");
+  });
+});
+
+describe("the weight panel asks for what the equation needs", () => {
+  it("collects weight, height, age, sex, activity, meals and a goal", () => {
+    for (const id of ["weight", "height", "age", "sex", "activityLevel", "mealsPerDay", "goal"]) {
+      const field = doc.getElementById(id);
+      expect(field, `#${id}`).toBeTruthy();
+      expect(
+        doc.querySelector(`label[for="${id}"]`),
+        `#${id} needs a label pointing at it`,
+      ).toBeTruthy();
+    }
+  });
+
+  it("lets someone decline to state their sex", () => {
+    const options = [...doc.querySelectorAll("#sex option")].map((o) => o.getAttribute("value"));
+    expect(options).toContain("unspecified");
+  });
+
+  it("bounds the numeric inputs so a typo cannot produce nonsense", () => {
+    for (const id of ["weight", "height", "age", "mealsPerDay"]) {
+      const input = doc.getElementById(id);
+      expect(input?.getAttribute("type"), id).toBe("number");
+      expect(input?.hasAttribute("min"), `#${id} needs a min`).toBe(true);
+      expect(input?.hasAttribute("max"), `#${id} needs a max`).toBe(true);
+    }
+  });
+});
+
+describe("the page is honest about its own model", () => {
+  it("says it is not medical advice", () => {
+    expect(text()).toMatch(/not medical advice/iu);
+  });
+
+  it("says whose physiology it is modelling", () => {
+    expect(text()).toMatch(/teaching model of a healthy adult/iu);
+  });
+
+  it("declines the bigger headline effect size and says why", () => {
+    // Shukla 2015 found 73% off the iAUC in type 2 diabetes. Using that number
+    // for a healthy visitor would be the easy, wrong choice.
+    expect(text()).toMatch(/73%/u);
+    expect(text()).toMatch(/prediabetes/iu);
+  });
+
+  it("admits the glycaemic index is a wide average", () => {
+    expect(text()).toMatch(/48\s*to\s*92/iu);
+  });
+
+  it("admits the weight projection is linear and drifts", () => {
+    expect(text()).toMatch(/7,700 kcal/u);
+  });
+
+  it("cites the papers the numbers came from, as real links", () => {
+    const refs = [...doc.querySelectorAll<HTMLAnchorElement>(".refs__list a")];
+    expect(refs.length).toBeGreaterThanOrEqual(8);
+    for (const ref of refs) {
+      expect(ref.getAttribute("href") ?? "", ref.textContent ?? "").toMatch(/^https:\/\//u);
+      expect((ref.textContent ?? "").trim().length, "a citation needs readable link text").toBeGreaterThan(12);
+    }
+    const list = doc.querySelector(".refs__list")?.textContent ?? "";
+    for (const expected of ["Atkinson", "Shukla", "Mifflin", "Buffey"]) {
+      expect(list, `sources should cite ${expected}`).toContain(expected);
+    }
+  });
+});
+
+describe("the build is a static, self-contained site", () => {
+  it("fetches no scripts, styles or images from another origin", () => {
+    const resources = [
+      ...doc.querySelectorAll<HTMLElement>("script[src], link[rel~='stylesheet'], img[src], iframe[src]"),
+    ];
+    for (const node of resources) {
+      const url = node.getAttribute("src") ?? node.getAttribute("href") ?? "";
+      expect(/^(https?:)?\/\//u.test(url), `${node.tagName} reaches off-origin: ${url}`).toBe(false);
+    }
+  });
+
+  it("uses relative asset URLs, so it works under the Pages sub-path", () => {
+    for (const node of doc.querySelectorAll<HTMLElement>("script[src], link[rel~='stylesheet']")) {
+      const url = node.getAttribute("src") ?? node.getAttribute("href") ?? "";
+      expect(url.startsWith("/"), `${url} is absolute and will 404 under /<repo>/`).toBe(false);
+    }
+  });
+
+  it("keeps the process evidence out of the deployed site", () => {
+    for (const leaked of ["PROCESS.md", "reflections", "CLAUDE.md", "DESIGN.md"]) {
+      expect(existsSync(resolve(DIST, leaked)), `${leaked} should not ship`).toBe(false);
+    }
+  });
+
+  it("resolves every in-page anchor to something that exists", () => {
+    for (const link of doc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
+      const id = link.getAttribute("href")?.slice(1) ?? "";
+      expect(doc.getElementById(id), `${link.getAttribute("href")} goes nowhere`).toBeTruthy();
+    }
+  });
+});
