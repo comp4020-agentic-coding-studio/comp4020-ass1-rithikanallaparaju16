@@ -232,7 +232,7 @@ h1 {
 .step {
   padding: clamp(2rem, 4vw, 3.25rem) 0;
   border-top: 1px solid var(--border);
-  scroll-margin-top: 5rem;
+  scroll-margin-top: 7rem;
 }
 
 .step__head {
@@ -1381,6 +1381,10 @@ h1 {
 
   .sources-layout {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .step {
+    scroll-margin-top: 5rem;
   }
 
   .plate {
