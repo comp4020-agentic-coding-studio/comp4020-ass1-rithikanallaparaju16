@@ -2,33 +2,21 @@
 
 ## The breakthrough
 
-Building the calibration harness before building anything visible. I had a
-plausible glucose model and no way to know if it was right, so instead of
-wiring it to a chart I wrote a throwaway test that printed ten reference plates
-next to figures I had pulled from the literature. It took twenty minutes and it
-immediately showed the model giving a 2,700 kcal blowout a *lower* peak than a
-vending-machine lunch.
+I just simply built on the idea of how simple habits could make a great change.
+I built on that small idea and tried to include the ways to eat the same meal, and
+also the post-meal options that could make a lot of difference.
 
-That reframed the whole week. Without the harness I would have looked at one
-pretty curve, decided it looked about right, and shipped something confidently
-wrong. With it, I could see that the problem was not a bad constant but a bad
-representation — my brakes were in absolute grams when they should have been
-relative to the meal's carbohydrate. The fix corrected all ten plates at once,
-which is how I knew it was the real bug.
+This time I used Google Stitch and Playwright to explore my creativity.
 
 ## What it changed about me
 
-I used to treat green tests as the finish line. This week I broke my own code on
-purpose to see whether the tests would notice, and one of them did not: deleting
-the hypoglycaemia clamp left every test passing. The invariant I cared about most
-was the one nothing was actually defending.
+I always try to keep my webpage in an easy-to-understand way, so I implemented the
+same here and tried to add the marker on the left to make the user understand what
+they are exactly doing. This webpage focuses on simplicity and minimalism.
 
-I want to be the kind of developer who asks "what would make this fail?" before
-asking "does this pass?" — and who is willing to make a model *less* flattering
-to their own argument when the honest version is better. Cutting the eating-order
-benefit to zero for a plate of pure sugar weakened my headline number and made
-the page worth reading.
+Some results amazed me as to how much small habits really matter. It showed how
+much of a difference it could really make to eat protein before carbs. These facts
+really amaze me till date.
 
----
-
-*Draft in my own words — worth rewriting in your voice before you ship.*
+After this project I want to continue to show minimalism and the use of small
+habits throughout.
