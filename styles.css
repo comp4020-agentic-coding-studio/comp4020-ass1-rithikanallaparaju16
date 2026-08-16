@@ -51,11 +51,15 @@
   --stack-lg: 48px;
   --gutter: 24px;
   --margin-mobile: 16px;
-  --container: 1200px;
+  --container: 1280px;
 
   /* elevation — DESIGN.md levels 1 and 2 */
   --shadow-1: 0 4px 6px rgb(15 23 42 / 5%);
   --shadow-2: 0 2px 6px rgb(15 23 42 / 8%), 0 12px 28px rgb(15 23 42 / 7%);
+
+  /* Native controls follow the theme: without this the <select> menus and the
+     number-input spinners stay light inside a dark page. */
+  color-scheme: light;
 
   /* the translucent sticky header, and the plate's category rings */
   --header-bg: #f7f9fbeb;
@@ -113,6 +117,9 @@
   --band-hypo: #2a1618;
   --shadow-1: 0 4px 6px rgb(0 0 0 / 30%);
   --shadow-2: 0 2px 6px rgb(0 0 0 / 35%), 0 12px 28px rgb(0 0 0 / 30%);
+
+  color-scheme: dark;
+
   --header-bg: #16191beb;
   --primary-hover: #d5dbf0;
   --cat-protein: #f0a3c4;
@@ -360,7 +367,7 @@ a {
 
 .site-nav a {
   padding: 10px 0;
-  color: var(--on-surface-variant);
+  color: var(--on-surface);
   text-decoration: none;
   border-bottom: 1px solid var(--surface-variant);
 }
@@ -416,24 +423,14 @@ main {
   border-radius: var(--radius-full);
 }
 
-.eyebrow,
-.panel__num {
+.eyebrow {
+  margin-bottom: 12px;
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
+  color: var(--secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.eyebrow {
-  margin-bottom: 12px;
-  color: var(--secondary);
-}
-
-.panel__num {
-  margin-bottom: 8px;
-  font-family: var(--mono);
-  color: var(--tertiary-text);
 }
 
 h1 {
@@ -453,71 +450,108 @@ h1 {
   color: var(--on-surface-variant);
 }
 
-/* ------------------------------------------------------------------ studio */
+/* ----------------------------------------------------------------- journey */
 
-.studio {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--stack-md);
-  align-items: start;
-  padding-bottom: var(--stack-lg);
-}
-
-.studio > * {
-  min-width: 0;
-}
-
-.studio__input {
+.journey {
   display: flex;
   flex-direction: column;
-  gap: var(--stack-md);
+  padding-bottom: var(--stack-md);
+  counter-reset: step;
+}
+
+/* The dotted rail. Each step hangs off it with a checkpoint, so the order of
+   operations is visible instead of inferred — and the checkpoint fills in green
+   once that step has actually been done. */
+.step {
+  position: relative;
   min-width: 0;
+  padding: 0 0 var(--stack-lg) 30px;
+  border-left: 2px dashed var(--outline-variant);
 }
 
-/* `display: contents` dissolves this wrapper below the desktop split so the
-   chart becomes a direct child of the studio grid. A sticky element can only
-   stick inside its own containing block, and while this div was a real box the
-   chart unstuck the moment you scrolled past it — which is precisely when you
-   start tapping food and most need to see the lines move. */
-.studio__output {
-  display: contents;
+.step--last {
+  border-left-color: transparent;
 }
 
-.readings {
+.step__marker {
+  position: absolute;
+  top: -2px;
+  left: -17px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  background: var(--background);
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+}
+
+.step[data-done="true"] .step__marker {
+  color: var(--on-secondary);
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.step__body {
   min-width: 0;
+  padding-top: 2px;
 }
 
-/* Below the desktop split the chart alone stays pinned under the header while
-   the controls scroll past it, so every tap on a food moves a line you can
-   still see. DESIGN.md's tablet rule stacks plate-then-chart; this deviates
-   from it deliberately, because the two lines are the subject of the page and
-   a chart you have to scroll back to is not a centrepiece. */
-.stage {
-  position: sticky;
-  min-width: 0;
-  top: var(--header-h);
-  z-index: 10;
-  padding: 8px 8px 2px;
-  background: var(--surface);
-  border: 1px solid var(--surface-variant);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2);
+.step__kicker {
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tertiary-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.stage__head {
-  display: none;
-}
-
-.stage__title {
+.step__title {
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
   letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
-.stage__sub {
-  margin-top: 4px;
+.step__lead {
+  max-width: 62ch;
+  margin-top: 8px;
+  margin-bottom: var(--stack-md);
   color: var(--on-surface-variant);
+}
+
+/* step 1: the builder */
+
+.builder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--stack-md);
+  align-items: start;
+}
+
+.builder__library,
+.builder__meal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-sm);
+  min-width: 0;
+}
+
+/* step 3: the chart, now full width instead of pinned beside the builder */
+
+.stage {
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--surface-variant);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
 }
 
 .chart {
@@ -526,7 +560,7 @@ h1 {
 
 .chart__frame {
   position: relative;
-  height: 172px;
+  height: clamp(230px, 34vh, 300px);
   overflow: hidden;
   cursor: crosshair;
   border-radius: var(--radius);
@@ -539,13 +573,14 @@ h1 {
 }
 
 .chart__readout {
-  padding: 4px 4px 2px;
+  padding: 8px 4px 2px;
   font-size: 13px;
   line-height: 18px;
   color: var(--on-surface-variant);
 }
 
-/* chart internals */
+/* chart internals: every fill and stroke is a token, so both themes and the
+   contrast sensor stay in charge of the colours. */
 
 .chart__band--target {
   fill: var(--band-target);
@@ -896,11 +931,6 @@ h1 {
   color: var(--on-surface-variant);
 }
 
-.panel,
-.section {
-  scroll-margin-top: calc(var(--header-h) + var(--stage-h) + 16px);
-}
-
 .section {
   padding: var(--stack-lg) 0;
   border-top: 1px solid var(--surface-variant);
@@ -909,21 +939,6 @@ h1 {
 .section__head {
   max-width: 34em;
   margin-bottom: var(--stack-md);
-}
-
-.panel__title,
-.section h2 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 32px;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-.panel__lead {
-  margin-top: 8px;
-  margin-bottom: var(--stack-sm);
-  color: var(--on-surface-variant);
 }
 
 /* -------------------------------------------------------- step 1: the meal */
@@ -1768,15 +1783,17 @@ h1 {
     font-size: 19px;
   }
 
-  .chart__frame {
-    height: 215px;
+  .step {
+    padding-left: 44px;
   }
 
-  .library__filters {
-    flex-flow: row wrap;
-    gap: 8px var(--gutter);
-    align-items: center;
-    justify-content: space-between;
+  .step__title {
+    font-size: 30px;
+    line-height: 38px;
+  }
+
+  .chart__frame {
+    height: clamp(260px, 38vh, 360px);
   }
 
   /* On a tablet the meal card has width to spare, so the plate sits beside its
@@ -1788,6 +1805,13 @@ h1 {
     align-items: start;
   }
 
+  .library__filters {
+    flex-flow: row wrap;
+    gap: 8px var(--gutter);
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .trend-layout {
     grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
   }
@@ -1797,48 +1821,14 @@ h1 {
   }
 }
 
-/* DESIGN.md, Layout: 12-column grid at 1200px+, plate on the left 5 columns,
-   glucose curve on the right 7. The curve column is the sticky one. */
-@media (width >= 1120px) {
-  .studio {
-    grid-template-columns: 5fr 7fr;
-    gap: 0 var(--gutter);
-  }
-
-  .studio__input {
-    grid-row: 1;
-    grid-column: 1;
-  }
-
-  /* Spans both rows so the curve column starts level with the headline, and
-     sticks for the whole length of the controls beside it. */
-  .studio__output {
-    position: sticky;
-    top: calc(var(--header-h) + 16px);
-    display: flex;
-    flex-direction: column;
-    gap: var(--stack-md);
-    grid-row: 1;
-    grid-column: 2;
-    align-self: start;
-    min-width: 0;
-    max-height: calc(100vh - var(--header-h) - 32px);
-    overflow-y: auto;
-  }
-
-  .stage {
-    position: static;
-    padding: 16px;
-    box-shadow: var(--shadow-1);
-  }
-
-  .stage__head {
-    display: block;
-    margin-bottom: 12px;
-  }
-
-  .chart__frame {
-    height: clamp(240px, 34vh, 380px);
+/* Laptop: the food library and the plate sit side by side, and the chart runs
+   the full width of the page underneath them. Nothing is pinned — until there
+   is food on the plate the curve has nothing to say, so the space is worth more
+   to the plate than to a chart of a flat line. */
+@media (width >= 1000px) {
+  .builder {
+    grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
+    gap: var(--gutter);
   }
 
   .meal {
@@ -1847,6 +1837,21 @@ h1 {
 
   .plate {
     max-width: 250px;
+  }
+
+  .step {
+    padding-left: 56px;
+  }
+
+  .step__marker {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+    left: -19px;
+  }
+
+  .chart__frame {
+    height: clamp(300px, 44vh, 460px);
   }
 }
 

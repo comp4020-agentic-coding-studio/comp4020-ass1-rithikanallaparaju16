@@ -89,165 +89,112 @@
            moves them. That is the entire point of the page. -->
       <section class="hero">
         <p class="eyebrow">An interactive explainer</p>
-        <h1>The order you eat your food in changes your blood sugar.</h1>
+        <h1>Three small habits change your blood sugar more than the diet does.</h1>
         <p class="lede">
-          Not what you eat. Not how much. The <em>order</em>. Eat the vegetables and the chicken
-          before you touch the rice, and the spike that follows is around a third smaller than if
-          you had started with the rice — same meal, same grams, same calories.
+          Not a diet. Not a rule about what you are allowed to eat. Three habits that cost you
+          nothing — <strong>what goes on the plate</strong> before you eat,
+          <strong>the order you eat it in</strong> while you do, and
+          <strong>what you do for twenty minutes</strong> afterwards.
         </p>
-        <ol class="hero__steps">
-          <li><span class="hero__step-num" aria-hidden="true">1</span> Build a meal</li>
-          <li><span class="hero__step-num" aria-hidden="true">2</span> Choose what you do next</li>
-          <li><span class="hero__step-num" aria-hidden="true">3</span> Watch both curves</li>
-        </ol>
+        <p class="lede lede--quiet">
+          Take one meal and try all three. The same food, the same grams and the same calories can
+          produce a spike a third smaller, or none at all — and this page draws you both curves so
+          you can see the difference the habits make.
+        </p>
       </section>
 
-      <div class="studio" id="studio">
-        <div class="studio__output">
-          <div class="stage" data-role="stage">
-            <div class="stage__head">
-              <h2 class="stage__title">Your blood sugar, for the next three hours</h2>
-              <p class="stage__sub" data-role="stage-sub">
-                Two lines from one plate. The only difference between them is the order the food
-                went in.
-              </p>
-            </div>
-
-            <figure class="chart">
-              <div
-                class="chart__frame"
-                data-role="chart"
-                tabindex="0"
-                aria-describedby="chart-help"
-              ></div>
-              <p class="visually-hidden" id="chart-help">
-                Use the left and right arrow keys to read the two curves minute by minute. Home and
-                End jump to the start and the end.
-              </p>
-              <figcaption class="chart__readout" data-role="readout" aria-live="polite"></figcaption>
-            </figure>
-          </div>
-
-          <div class="readings">
-            <div class="legend">
-              <p class="legend__item legend__item--carbs">
-                <span class="legend__swatch" aria-hidden="true"></span>
-                <span
-                  ><strong>Carbs &amp; sugar first</strong> — the bread, rice or drink goes in
-                  first, on an empty stomach</span
-                >
-              </p>
-              <p class="legend__item legend__item--protein">
-                <span class="legend__swatch" aria-hidden="true"></span>
-                <span
-                  ><strong>Protein &amp; fibre first</strong> — the veg and the protein go in before
-                  any carbohydrate</span
-                >
-              </p>
-            </div>
-
-            <div class="results" data-role="results" hidden>
-              <div class="stats" data-role="stats"></div>
-              <p class="verdict" data-role="verdict"></p>
-
-              <details class="table-details">
-                <summary>Read the curve as a table</summary>
-                <div class="table-scroll">
-                  <table class="curve-table" data-role="curve-table">
-                    <caption>Blood glucose in mg/dL, every 20 minutes after the first bite.</caption>
-                  </table>
-                </div>
-              </details>
-            </div>
-          </div>
-        </div>
-
-        <div class="studio__input">
-          <div class="run">
-            <button type="button" class="btn btn--primary" data-role="run">
-              Draw the two curves
-            </button>
-            <p class="run__hint" data-role="run-hint">
-              You can press this with an empty plate. It will be honest about it.
-            </p>
-          </div>
-
-          <section class="panel" id="plate" aria-labelledby="plate-heading">
-            <p class="panel__num">Step 1</p>
-            <h2 class="panel__title" id="plate-heading">Build a meal</h2>
-            <p class="panel__lead">
+      <!-- ========================================================== journey
+           A single scroll with a dotted rail down the left and a checkpoint per
+           step, so the order of operations is a thing you can see rather than a
+           thing you have to infer. The chart is no longer pinned beside the
+           builder: until there is food on the plate there is nothing for it to
+           show, and the space is worth more to the plate. -->
+      <ol class="journey" id="studio">
+        <li class="step" id="plate" data-step="1">
+          <p class="step__marker" aria-hidden="true"><span data-role="marker-1">1</span></p>
+          <div class="step__body">
+            <p class="step__kicker">Habit one · before you eat</p>
+            <h2 class="step__title">Build your plate</h2>
+            <p class="step__lead">
               Tap anything to put it on the plate. Tap again for a second serve. Nothing here is
               compulsory — an empty plate is a flat line, which is its own kind of answer.
             </p>
 
-            <div class="meal">
-              <div class="meal__plate">
-                <div class="plate">
-                <div class="plate__rim">
-                  <p class="plate__empty" data-role="plate-empty">
-                    <span class="plate__empty-icon" aria-hidden="true">🍽️</span>
-                    Your plate is empty
+            <div class="builder">
+              <div class="builder__library">
+                <div class="library">
+                  <div class="library__filters">
+                    <div
+                      class="chipset"
+                      role="group"
+                      aria-label="Food category"
+                      data-role="categories"
+                    ></div>
+                    <div class="chipset chipset--diet" role="group" aria-label="Dietary filter">
+                      <button type="button" class="chip" data-diet="all" aria-pressed="true">
+                        Everything
+                      </button>
+                      <button type="button" class="chip" data-diet="vegetarian" aria-pressed="false">
+                        Vegetarian
+                      </button>
+                      <button type="button" class="chip" data-diet="vegan" aria-pressed="false">
+                        Vegan
+                      </button>
+                    </div>
+                  </div>
+                  <p class="library__blurb" data-role="category-blurb"></p>
+                  <ul class="food-grid" data-role="food-grid"></ul>
+                  <p class="library__empty" data-role="library-empty" hidden>
+                    Nothing in this category fits that filter. Try another category.
                   </p>
-                  <!-- Decorative: the same items are listed precisely, with their
-                       grams, in the tally below. -->
-                  <ul class="plate__items" data-role="plate-items" aria-hidden="true"></ul>
                 </div>
-                </div>
-                <p class="plate__total" data-role="plate-total" aria-live="polite"></p>
               </div>
+              <div class="builder__meal">
+                <div class="meal">
+                  <div class="meal__plate">
+                    <div class="plate">
+                    <div class="plate__rim">
+                      <p class="plate__empty" data-role="plate-empty">
+                        <span class="plate__empty-icon" aria-hidden="true">🍽️</span>
+                        Your plate is empty
+                      </p>
+                      <!-- Decorative: the same items are listed precisely, with their
+                           grams, in the tally below. -->
+                      <ul class="plate__items" data-role="plate-items" aria-hidden="true"></ul>
+                    </div>
+                    </div>
+                    <p class="plate__total" data-role="plate-total" aria-live="polite"></p>
+                  </div>
 
-              <div class="meal__figures">
-                <ul class="tally__items" data-role="tally-items"></ul>
-              <p class="tally__empty" data-role="tally-empty">
-                Grams here are always the number of serves times that food's serve weight. The panel
-                shows you both numbers so you can check the arithmetic yourself.
-              </p>
-                <dl class="macros" data-role="macros"></dl>
-                <div class="meal__actions">
-                  <button type="button" class="btn btn--ghost" data-role="clear" disabled>
-                    Clear the plate
-                  </button>
+                  <div class="meal__figures">
+                    <ul class="tally__items" data-role="tally-items"></ul>
+                  <p class="tally__empty" data-role="tally-empty">
+                    Grams here are always the number of serves times that food's serve weight. The panel
+                    shows you both numbers so you can check the arithmetic yourself.
+                  </p>
+                    <dl class="macros" data-role="macros"></dl>
+                    <div class="meal__actions">
+                      <button type="button" class="btn btn--ghost" data-role="clear" disabled>
+                        Clear the plate
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="presets">
+                  <p class="presets__label">Or start from someone else's lunch:</p>
+                  <div class="presets__row" data-role="presets"></div>
                 </div>
               </div>
             </div>
+          </div>
+        </li>
 
-            <div class="presets">
-              <p class="presets__label">Or start from someone else's lunch:</p>
-              <div class="presets__row" data-role="presets"></div>
-            </div>
-
-            <div class="library">
-              <div class="library__filters">
-                <div
-                  class="chipset"
-                  role="group"
-                  aria-label="Food category"
-                  data-role="categories"
-                ></div>
-                <div class="chipset chipset--diet" role="group" aria-label="Dietary filter">
-                  <button type="button" class="chip" data-diet="all" aria-pressed="true">
-                    Everything
-                  </button>
-                  <button type="button" class="chip" data-diet="vegetarian" aria-pressed="false">
-                    Vegetarian
-                  </button>
-                  <button type="button" class="chip" data-diet="vegan" aria-pressed="false">
-                    Vegan
-                  </button>
-                </div>
-              </div>
-              <p class="library__blurb" data-role="category-blurb"></p>
-              <ul class="food-grid" data-role="food-grid"></ul>
-              <p class="library__empty" data-role="library-empty" hidden>
-                Nothing in this category fits that filter. Try another category.
-              </p>
-            </div>
-          </section>
-
-          <section class="panel" id="after" aria-labelledby="after-heading">
-            <p class="panel__num">Step 2</p>
-            <h2 class="panel__title" id="after-heading">Then what do you do for two hours?</h2>
-            <p class="panel__lead">
+        <li class="step" id="after" data-step="2">
+          <p class="step__marker" aria-hidden="true"><span data-role="marker-2">2</span></p>
+          <div class="step__body">
+            <p class="step__kicker">Habit two · after you eat</p>
+            <h2 class="step__title">What do you do for the next two hours?</h2>
+            <p class="step__lead">
               Muscle pulls glucose out of your blood while it is contracting, without waiting for
               insulin to ask it to. That is why <em>when</em> you move matters more than how hard.
               Sitting is the control condition and it is already selected, so you can skip this step.
@@ -256,23 +203,90 @@
               <legend class="visually-hidden">What you do after the meal</legend>
             </fieldset>
             <p class="evidence" data-role="activity-evidence"></p>
-          </section>
-        </div>
-      </div>
+            <p class="evidence" data-role="activity-evidence"></p>
+          </div>
+        </li>
 
-      <!-- ------------------------------------------------------------ trend -->
-      <section class="section" id="trend" aria-labelledby="trend-heading">
-        <div class="section__head">
-          <p class="panel__num">Step 3</p>
-          <h2 id="trend-heading">Where does this plate take your weight?</h2>
-          <p class="panel__lead">
-            The curve above is about the next three hours. This is about the next year. Tell the page
-            enough to estimate what you burn in a day and it will compare that with eating like this
-            regularly.
-          </p>
-        </div>
+        <li class="step" id="curve" data-step="3">
+          <p class="step__marker" aria-hidden="true"><span data-role="marker-3">3</span></p>
+          <div class="step__body">
+            <p class="step__kicker">Habit three · while you eat</p>
+            <h2 class="step__title">Now watch the order do its work</h2>
+            <p class="step__lead">
+              Two lines, one plate. The only difference between them is which end of the meal you
+              started at.
+            </p>
 
-        <div class="trend-layout">
+            <div class="run">
+              <button type="button" class="btn btn--primary" data-role="run">
+                Draw the two curves
+              </button>
+              <p class="run__hint" data-role="run-hint">
+                You can press this with an empty plate. It will be honest about it.
+              </p>
+            </div>
+
+            <div class="stage" data-role="stage">
+              <figure class="chart">
+                <div
+                  class="chart__frame"
+                  data-role="chart"
+                  tabindex="0"
+                  aria-describedby="chart-help"
+                ></div>
+                <p class="visually-hidden" id="chart-help">
+                  Use the left and right arrow keys to read the two curves minute by minute. Home and
+                  End jump to the start and the end.
+                </p>
+                <figcaption class="chart__readout" data-role="readout" aria-live="polite"></figcaption>
+              </figure>
+            </div>
+
+            <div class="readings">
+              <div class="legend">
+                <p class="legend__item legend__item--carbs">
+                  <span class="legend__swatch" aria-hidden="true"></span>
+                  <span
+                    ><strong>Carbs &amp; sugar first</strong> — the bread, rice or drink goes in
+                    first, on an empty stomach</span
+                  >
+                </p>
+                <p class="legend__item legend__item--protein">
+                  <span class="legend__swatch" aria-hidden="true"></span>
+                  <span
+                    ><strong>Protein &amp; fibre first</strong> — the veg and the protein go in before
+                    any carbohydrate</span
+                  >
+                </p>
+              </div>
+              <div class="results" data-role="results" hidden>
+                <div class="stats" data-role="stats"></div>
+                <p class="verdict" data-role="verdict"></p>
+
+                <details class="table-details">
+                  <summary>Read the curve as a table</summary>
+                  <div class="table-scroll">
+                    <table class="curve-table" data-role="curve-table">
+                      <caption>Blood glucose in mg/dL, every 20 minutes after the first bite.</caption>
+                    </table>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li class="step step--last" id="trend" data-step="4">
+          <p class="step__marker" aria-hidden="true"><span data-role="marker-4">4</span></p>
+          <div class="step__body">
+            <p class="step__kicker">The long run</p>
+            <h2 class="step__title" id="trend-heading">Where does eating like this take your weight?</h2>
+            <p class="step__lead">
+              The curves above are about the next three hours. This is about the next year. Tell the
+              page enough to estimate what you burn in a day and it will compare that with eating
+              like this regularly.
+            </p>
+
+            <div class="trend-layout">
           <form class="profile" data-role="profile" novalidate>
             <div class="field">
               <label for="weight">Weight</label>
@@ -361,7 +375,9 @@
             <div class="advice" data-role="advice"></div>
           </div>
         </div>
-      </section>
+  </div>
+        </li>
+      </ol>
 
       <!-- ---------------------------------------------------------- sources -->
       <section class="section" id="sources" aria-labelledby="sources-heading">

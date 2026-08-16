@@ -212,30 +212,59 @@ describe("the build is a static, self-contained site", () => {
   });
 });
 
-describe("the chart is the centrepiece, per DESIGN.md", () => {
+describe("the page is one scroll, with the steps signposted", () => {
   const css = readFileSync(resolve("styles.css"), "utf8");
 
-  it("gives the curve the right 7 of 12 columns and the plate the left 5", () => {
-    // DESIGN.md, Layout: "The 'Plate' area occupies the left 5 columns, while
-    // the 'Glucose Curve' occupies the right 7."
-    expect(css).toMatch(/\.studio\s*\{[^}]*grid-template-columns:\s*5fr 7fr/u);
+  it("runs top to bottom: plate, then afterwards, then the curve, then weight", () => {
+    // The chart used to be pinned beside the builder. It is not: until there is
+    // food on the plate the curve has nothing to show, and the space is worth
+    // more to the plate. Order is the contract, so assert the order.
+    const steps = [...doc.querySelectorAll(".journey .step")].map((el) => el.id);
+    expect(steps).toEqual(["plate", "after", "curve", "trend"]);
   });
 
-  it("pins the chart so the lines never leave the screen", () => {
-    // The whole argument is a comparison between two lines. A chart you have to
-    // scroll back to cannot be the subject of the page.
-    expect(css).toMatch(/\.stage\s*\{[^}]*position:\s*sticky/u);
-    expect(css).toMatch(/\.studio__output\s*\{[^}]*position:\s*sticky/u);
+  it("pins nothing except the site header", () => {
+    for (const rule of ["\\.stage", "\\.journey", "\\.builder"]) {
+      const block = new RegExp(`${rule}\\s*\\{([^}]*)\\}`, "u").exec(css)?.[1] ?? "";
+      expect(block, `${rule} must not be sticky`).not.toMatch(/position:\s*sticky/u);
+    }
+    expect(css).toMatch(/\.site-header\s*\{[^}]*position:\s*sticky/u);
   });
 
-  it("keeps the container at the width DESIGN.md specifies", () => {
-    expect(css).toMatch(/--container:\s*1200px/u);
+  it("gives every step a numbered checkpoint on a dashed rail", () => {
+    const steps = [...doc.querySelectorAll<HTMLElement>(".journey .step")];
+    expect(steps).toHaveLength(4);
+    steps.forEach((step, i) => {
+      expect(step.dataset.step, "each step declares its number").toBe(String(i + 1));
+      const marker = step.querySelector(".step__marker");
+      expect(marker, `step ${i + 1} needs a checkpoint`).toBeTruthy();
+      expect(marker?.getAttribute("aria-hidden")).toBe("true");
+      expect(step.querySelector(`[data-role="marker-${i + 1}"]`)).toBeTruthy();
+    });
+    expect(css).toMatch(/\.step\s*\{[^}]*border-left:[^;]*dashed/u);
+    expect(css, "a completed checkpoint has to look different").toMatch(
+      /\.step\[data-done="true"\] \.step__marker\s*\{/u,
+    );
+  });
+
+  it("labels the three habits as before, while and after eating", () => {
+    const kickers = [...doc.querySelectorAll(".step__kicker")].map((el) =>
+      el.textContent?.toLowerCase().replace(/\s+/gu, " ").trim(),
+    );
+    expect(kickers[0]).toMatch(/before you eat/u);
+    expect(kickers[1]).toMatch(/after you eat/u);
+    expect(kickers[2]).toMatch(/while you eat/u);
+  });
+
+  it("opens on what the page is for, not on what it is called", () => {
+    const hero = doc.querySelector(".hero")?.textContent?.replace(/\s+/gu, " ") ?? "";
+    expect(hero).toMatch(/habits/iu);
+    expect(hero, "the hero must name all three habits").toMatch(/on the plate/iu);
+    expect(hero).toMatch(/the order you eat it in/iu);
+    expect(hero).toMatch(/twenty minutes/iu);
   });
 
   it("labels both curves on the lines, not only in a legend", () => {
-    // The legend scrolls away once the chart goes sticky on a phone, at which
-    // point two coloured lines would mean nothing on their own. Assert on the
-    // rendered SVG rather than on the source: what matters is what ships.
     const sim = simulate({
       items: [
         { food: FOODS_BY_ID.get("white-rice")!, units: 2 },
@@ -247,15 +276,10 @@ describe("the chart is the centrepiece, per DESIGN.md", () => {
     const svg = renderChart(sim, 700, 340, null);
     expect(svg).toMatch(/chart__label--carbs/u);
     expect(svg).toMatch(/chart__label--protein/u);
-    expect(svg, "each label carries its own peak value").toMatch(
-      new RegExp(`carbs &amp; sugar first · ${Math.round(sim.series["carbs-sugar-first"].peakMgDl)}`, "u"),
-    );
     expect(css).toMatch(/\.chart__label\s*\{/u);
   });
 
   it("says so plainly when reordering the plate changes nothing", () => {
-    // A cola, white bread and a donut: nothing on it can be eaten first, so
-    // both series are the same line and the chart must not imply two.
     const sim = simulate({
       items: [
         { food: FOODS_BY_ID.get("cola")!, units: 1 },
@@ -267,6 +291,26 @@ describe("the chart is the centrepiece, per DESIGN.md", () => {
     const svg = renderChart(sim, 700, 340, null);
     expect(svg).toMatch(/both orders ·/u);
     expect(svg).not.toMatch(/chart__label--carbs/u);
+  });
+
+  it("keeps every chart colour on a token, so both themes drive it", () => {
+    // Restoring these after a refactor is not optional: an SVG whose `fill` is
+    // an undefined var falls back to black and whose `stroke` falls back to
+    // none, so the chart renders as a black slab with no curves on it.
+    for (const cls of [
+      "chart__band--target",
+      "chart__band--spike",
+      "chart__band--hypo",
+      "chart__line--carbs",
+      "chart__line--protein",
+      "chart__between",
+      "chart__label--carbs",
+      "chart__label--protein",
+    ]) {
+      const block = new RegExp(`\\.${cls}\\s*\\{([^}]*)\\}`, "u").exec(css)?.[1];
+      expect(block, `.${cls} has no rule — the chart will paint black`).toBeTruthy();
+      expect(block, `.${cls} must colour from a token`).toMatch(/var\(--/u);
+    }
   });
 });
 
@@ -290,8 +334,16 @@ describe("the layout cannot be propped open by its own chart", () => {
   });
 
   it("stops any grid child resolving to its min-content width", () => {
-    expect(css).toMatch(/\.studio\s*>\s*\*\s*\{[^}]*min-width:\s*0/u);
-    expect(css).toMatch(/\.studio\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+    expect(css).toMatch(/\.builder\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+    expect(css).toMatch(/\.builder__library,\n\.builder__meal\s*\{[^}]*min-width:\s*0/u);
+  });
+
+  it("switches the native controls with the theme", () => {
+    // Without color-scheme the <select> menus and number-input spinners stay
+    // light inside a dark page, which is most of what "dark mode doesn't work"
+    // actually looks like.
+    expect(css).toMatch(/:root\s*\{[^}]*color-scheme:\s*light/u);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*color-scheme:\s*dark/u);
   });
 
   it("collapses the nav into a menu button on a phone", () => {

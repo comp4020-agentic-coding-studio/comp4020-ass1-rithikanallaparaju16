@@ -39,6 +39,7 @@ type State = {
   plate: Map<string, number>;
   activityId: string;
   hasRun: boolean;
+  activityChosen: boolean;
   scrubIndex: number | null;
   profile: Profile;
 };
@@ -49,6 +50,7 @@ const state: State = {
   plate: new Map(),
   activityId: "sit",
   hasRun: false,
+  activityChosen: false,
   scrubIndex: null,
   profile: {
     weightKg: 70,
@@ -88,7 +90,6 @@ const dom = {
   run: ref<HTMLButtonElement>("run"),
   runHint: ref("run-hint"),
   stage: ref("stage"),
-  stageSub: ref("stage-sub"),
   results: ref("results"),
   chart: ref("chart"),
   readout: ref("readout"),
@@ -467,7 +468,6 @@ function renderCurve(): void {
   renderStats(sim);
   renderVerdict(sim);
   renderTable(sim);
-  dom.stageSub.textContent = `Two lines from one plate — same food, same grams, same calories. Afterwards you ${sim.activity.label.toLowerCase()}.`;
 }
 
 // ------------------------------------------------------------------- step 4
@@ -522,6 +522,7 @@ function renderTrend(): void {
 
 /** Everything downstream of the plate, without rebuilding the food library. */
 function renderPlateDependent(): void {
+  renderCheckpoints();
   renderPlate();
   renderTally();
   renderCurve();
@@ -598,8 +599,10 @@ dom.activities.addEventListener("change", (event) => {
   const input = event.target as HTMLInputElement;
   if (input.name !== "activity") return;
   state.activityId = input.value;
+  state.activityChosen = true;
   state.scrubIndex = null;
   updateActivitySelection();
+  renderCheckpoints();
   renderCurve();
 });
 
@@ -610,8 +613,7 @@ dom.run.addEventListener("click", () => {
   dom.runHint.textContent =
     "Change the plate or what you do afterwards and both curves redraw straight away.";
   renderCurve();
-  // No scrollIntoView: the chart is pinned above the controls, so it is already
-  // on screen. Scrolling here would fight the sticky panel it scrolls towards.
+  renderCheckpoints();
   measureChrome();
 });
 
@@ -713,6 +715,28 @@ function readProfile(): void {
 dom.profile.addEventListener("input", readProfile);
 dom.profile.addEventListener("change", readProfile);
 dom.profile.addEventListener("submit", (event) => event.preventDefault());
+
+/**
+ * The dotted rail's checkpoints. A step is "done" when the visitor has actually
+ * done it, not when they have scrolled past it — which is the whole reason the
+ * rail is there: four panels in a row read as one long form until something
+ * tells you where you are in it.
+ */
+function renderCheckpoints(): void {
+  const done: Record<string, boolean> = {
+    "1": state.plate.size > 0,
+    "2": state.activityChosen,
+    "3": state.hasRun,
+    "4": state.hasRun && state.plate.size > 0,
+  };
+  for (const [step, isDone] of Object.entries(done)) {
+    const li = document.querySelector<HTMLElement>(`[data-step="${step}"]`);
+    const glyph = document.querySelector<HTMLElement>(`[data-role="marker-${step}"]`);
+    if (!li || !glyph) continue;
+    li.dataset.done = String(isDone);
+    glyph.textContent = isDone ? "✓" : step;
+  }
+}
 
 // -------------------------------------------------------- theme and the menu
 
@@ -819,6 +843,7 @@ buildActivities();
 updateActivitySelection();
 buildProfileSelects();
 applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+renderCheckpoints();
 measureChrome();
 renderCurve();
 
