@@ -95,6 +95,42 @@ in the course the spec will ask you to show how you tested both. When you do,
 read a green performance result honestly: it's a lab estimate from one run on a
 CI machine, not proof the site is fast for real users.
 
+## Prototype invariants --- "After the Bite"
+
+This prototype simulates a postprandial glucose curve. A simulation that lies is
+worse than no simulation, so these are hard rules, not preferences. Each one has
+a test in `spec/` that fails if the code drifts; if you find yourself wanting to
+relax one, change the model, not the rule.
+
+- **The glucose curve must never render below ~70 mg/dL.** 70 is the clinical
+  hypoglycaemia threshold. A meal cannot drive a healthy person hypo, so a curve
+  dipping under 70 is a modelling artefact --- almost always a reactive
+  undershoot after a big spike, or an activity multiplier applied to the absolute
+  value instead of the excursion above baseline. Clamp in the model
+  (`clampFloor`), not in the renderer, so no consumer of the series can see an
+  out-of-range number. The chart's y-domain starts below 70 so the floor is
+  visibly a floor and not the axis edge.
+- **The curve must return to baseline by 180 minutes on the x-axis.** The x-axis
+  is fixed at 0--180 min and both series must equal the fasting baseline at both
+  ends. This is enforced by a taper in the model, not by trimming the drawn path:
+  a curve still elevated at the right-hand edge implies a metabolic story the
+  prototype is not entitled to tell.
+- **Displayed grams must always equal unit count × that food's defined unit
+  weight.** Grams are never stored on a plate item and never rounded into state.
+  Derive them with `gramsFor(item)` every time they are shown, and let every
+  nutrient number flow from that same figure. A gram total that disagrees with
+  the unit count printed beside it discredits the whole panel.
+
+Two supporting conventions that keep the above honest:
+
+- **Every number in the model traces to a citation.** Foods carry their GI and
+  macros with a source; effect sizes in the model carry the paper they came from
+  in a comment, and the page's Sources section lists them. If a number can't be
+  sourced, it doesn't ship.
+- **The two series differ only in eating order.** Same foods, same grams, same
+  activity. If anything else diverges between them, the comparison the whole page
+  rests on is invalid.
+
 ## The stack is swappable
 
 Out of the box this is plain HTML/CSS/TypeScript on Vite, and every `.html` file
