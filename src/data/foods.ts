@@ -153,7 +153,7 @@ export const FOODS: Food[] = [
   {
     id: "paneer",
     name: "Paneer",
-    emoji: "🧈",
+    emoji: "🧀",
     category: "protein",
     diet: "vegetarian",
     unit: "1 serve",
@@ -164,7 +164,7 @@ export const FOODS: Food[] = [
   {
     id: "tofu",
     name: "Tofu (firm)",
-    emoji: "◼️",
+    emoji: "⬜",
     category: "protein",
     diet: "vegan",
     unit: "1 block",
@@ -175,7 +175,7 @@ export const FOODS: Food[] = [
   {
     id: "tempeh",
     name: "Tempeh",
-    emoji: "🟫",
+    emoji: "🍘",
     category: "protein",
     diet: "vegan",
     unit: "1 slab",
@@ -198,7 +198,7 @@ export const FOODS: Food[] = [
   {
     id: "chickpeas",
     name: "Chickpeas",
-    emoji: "🫛",
+    emoji: "🟡",
     category: "protein",
     diet: "vegan",
     unit: "½ cup cooked",
@@ -220,7 +220,7 @@ export const FOODS: Food[] = [
   {
     id: "whey-shake",
     name: "Whey protein shake",
-    emoji: "🥤",
+    emoji: "💪",
     category: "protein",
     diet: "vegetarian",
     unit: "1 scoop",
@@ -326,7 +326,7 @@ export const FOODS: Food[] = [
   {
     id: "wholegrain-bread",
     name: "Wholegrain bread",
-    emoji: "🍞",
+    emoji: "🥪",
     category: "carbs",
     diet: "vegan",
     unit: "1 slice",
@@ -361,7 +361,7 @@ export const FOODS: Food[] = [
   {
     id: "naan",
     name: "Naan",
-    emoji: "🥯",
+    emoji: "🥙",
     category: "carbs",
     diet: "vegetarian",
     unit: "1 piece",
@@ -440,7 +440,7 @@ export const FOODS: Food[] = [
   {
     id: "couscous",
     name: "Couscous",
-    emoji: "🧆",
+    emoji: "🟨",
     category: "carbs",
     diet: "vegan",
     unit: "1 cup cooked",
@@ -451,7 +451,7 @@ export const FOODS: Food[] = [
   {
     id: "bagel",
     name: "Bagel",
-    emoji: "🥨",
+    emoji: "🥯",
     category: "carbs",
     diet: "vegan",
     unit: "1 bagel",
@@ -475,7 +475,7 @@ export const FOODS: Food[] = [
   {
     id: "spinach",
     name: "Spinach",
-    emoji: "🥬",
+    emoji: "🌿",
     category: "veggies",
     diet: "vegan",
     unit: "1 handful",
@@ -542,7 +542,7 @@ export const FOODS: Food[] = [
   {
     id: "green-beans",
     name: "Green beans",
-    emoji: "🫛",
+    emoji: "🟩",
     category: "veggies",
     diet: "vegan",
     unit: "1 serve",
@@ -586,7 +586,7 @@ export const FOODS: Food[] = [
   {
     id: "peas",
     name: "Green peas",
-    emoji: "🟢",
+    emoji: "🫛",
     category: "veggies",
     diet: "vegan",
     unit: "1 serve",
@@ -909,7 +909,7 @@ export const FOODS: Food[] = [
   {
     id: "cheddar",
     name: "Cheddar cheese",
-    emoji: "🧀",
+    emoji: "🟧",
     category: "fats",
     diet: "vegetarian",
     unit: "1 slice",
@@ -931,7 +931,7 @@ export const FOODS: Food[] = [
   {
     id: "hummus",
     name: "Hummus",
-    emoji: "🥣",
+    emoji: "🧆",
     category: "fats",
     diet: "vegan",
     unit: "1 serve",
@@ -943,7 +943,7 @@ export const FOODS: Food[] = [
   {
     id: "chia-seeds",
     name: "Chia seeds",
-    emoji: "🌾",
+    emoji: "⚫",
     category: "fats",
     diet: "vegan",
     unit: "1 tablespoon",

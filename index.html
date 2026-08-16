@@ -3,22 +3,449 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <meta
+      name="description"
+      content="Build a meal, choose what you do afterwards, and watch two blood-glucose curves diverge — one where you eat the protein and fibre first, one where you eat the carbs and sugar first."
+    />
+    <meta name="color-scheme" content="light" />
+    <title>After the Bite — the order you eat in changes your blood sugar</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 25C8 25 8.5 7 15 7s7 16 15 16' fill='none' stroke='%23059669' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <nav aria-label="Primary">
-        <a href="./">Home</a>
+    <a class="skip-link" href="#main">Skip to the meal builder</a>
+
+    <header class="site-header">
+      <a class="brand" href="./">
+        <svg class="brand__mark" viewBox="0 0 54 34" aria-hidden="true" focusable="false">
+          <defs>
+            <mask id="brand-bite">
+              <rect width="54" height="34" fill="#fff" />
+              <circle cx="24.5" cy="4" r="4.2" fill="#000" />
+            </mask>
+          </defs>
+          <line class="brand__base" x1="2" y1="27" x2="52" y2="27" />
+          <path
+            class="brand__curve"
+            d="M2 27C9 27 11 8 19.5 8S31 26 52 26"
+            fill="none"
+            stroke-linecap="round"
+          />
+          <circle class="brand__bite" cx="19.5" cy="8" r="5.6" mask="url(#brand-bite)" />
+        </svg>
+        <span class="brand__name">After the <span class="brand__name-em">Bite</span></span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#plate">Plate</a>
+        <a href="#after">Afterwards</a>
+        <a href="#curve">Curve</a>
+        <a href="#trend">Weight</a>
+        <a href="#sources">Sources</a>
       </nav>
     </header>
-    <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+
+    <main id="main">
+      <section class="hero">
+        <p class="eyebrow">An interactive explainer</p>
+        <h1>The order you eat your food in changes your blood sugar.</h1>
+        <p class="lede">
+          Not what you eat. Not how much. The <em>order</em>. Take one plate of food, eat the
+          vegetables and the chicken before you touch the rice, and the glucose spike that follows is
+          around a third smaller than if you had started with the rice — same meal, same grams, same
+          calories.
+        </p>
+        <p class="lede lede--quiet">
+          Build a plate below, pick what you do for the next couple of hours, and the page will draw
+          both curves for you.
+        </p>
+      </section>
+
+      <!-- ------------------------------------------------------------ step 1 -->
+      <section class="step" id="plate" aria-labelledby="plate-heading">
+        <div class="step__head">
+          <p class="step__num">Step 1</p>
+          <h2 id="plate-heading">Build a meal</h2>
+          <p class="step__lead">
+            Tap anything to put it on the plate. Tap again for a second serve. Nothing here is
+            compulsory — an empty plate is a flat line, which is its own kind of answer.
+          </p>
+        </div>
+
+        <div class="plate-layout">
+          <div class="library">
+            <div class="library__filters">
+              <div
+                class="chipset"
+                role="group"
+                aria-label="Food category"
+                data-role="categories"
+              ></div>
+              <div class="chipset chipset--diet" role="group" aria-label="Dietary filter">
+                <button type="button" class="chip" data-diet="all" aria-pressed="true">
+                  Everything
+                </button>
+                <button type="button" class="chip" data-diet="vegetarian" aria-pressed="false">
+                  Vegetarian
+                </button>
+                <button type="button" class="chip" data-diet="vegan" aria-pressed="false">
+                  Vegan
+                </button>
+              </div>
+            </div>
+            <p class="library__blurb" data-role="category-blurb"></p>
+            <ul class="food-grid" data-role="food-grid"></ul>
+            <p class="library__empty" data-role="library-empty" hidden>
+              Nothing in this category fits that filter. Try another category.
+            </p>
+          </div>
+
+          <div class="plate-col">
+            <div class="plate">
+              <div class="plate__rim">
+                <p class="plate__empty" data-role="plate-empty">
+                  <span class="plate__empty-icon" aria-hidden="true">🍽️</span>
+                  Your plate is empty
+                </p>
+                <!-- Decorative: the same items are listed precisely, with their
+                     grams, in the "What's on it" panel. -->
+                <ul class="plate__items" data-role="plate-items" aria-hidden="true"></ul>
+              </div>
+            </div>
+            <p class="plate__total" data-role="plate-total" aria-live="polite"></p>
+            <div class="presets">
+              <p class="presets__label">Or start from someone else's lunch:</p>
+              <div class="presets__row" data-role="presets"></div>
+            </div>
+          </div>
+
+          <div class="tally">
+            <h3>What's on it</h3>
+            <ul class="tally__items" data-role="tally-items"></ul>
+            <p class="tally__empty" data-role="tally-empty">
+              Grams here are always the number of serves times that food's serve weight. The panel
+              shows you both numbers so you can check the arithmetic yourself.
+            </p>
+            <dl class="macros" data-role="macros"></dl>
+            <button type="button" class="btn btn--ghost" data-role="clear" disabled>
+              Clear the plate
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ step 2 -->
+      <section class="step" id="after" aria-labelledby="after-heading">
+        <div class="step__head">
+          <p class="step__num">Step 2</p>
+          <h2 id="after-heading">Now what do you do for two hours?</h2>
+          <p class="step__lead">
+            Muscle pulls glucose out of your blood while it is contracting, without waiting for
+            insulin to ask it to. That is why <em>when</em> you move matters more than how hard.
+            Sitting is the control condition and it is already selected, so you can skip this step.
+          </p>
+        </div>
+        <fieldset class="activities" data-role="activities">
+          <legend class="visually-hidden">What you do after the meal</legend>
+        </fieldset>
+        <p class="evidence" data-role="activity-evidence"></p>
+      </section>
+
+      <!-- ------------------------------------------------------------ step 3 -->
+      <section class="step" id="curve" aria-labelledby="curve-heading">
+        <div class="step__head">
+          <p class="step__num">Step 3</p>
+          <h2 id="curve-heading">Draw the curve</h2>
+          <p class="step__lead">
+            Two lines, one plate. The only difference between them is the order the food went in.
+          </p>
+        </div>
+
+        <div class="run">
+          <button type="button" class="btn btn--primary" data-role="run">Show me the curve</button>
+          <p class="run__hint" data-role="run-hint">
+            You can press this with an empty plate. It will be honest about it.
+          </p>
+        </div>
+
+        <div class="curve-panel" data-role="curve-panel" hidden>
+          <div class="legend">
+            <p class="legend__item legend__item--carbs">
+              <span class="legend__swatch" aria-hidden="true"></span>
+              <span
+                ><strong>Carbs &amp; sugar first</strong> — the bread, rice or drink goes in first, on
+                an empty stomach</span
+              >
+            </p>
+            <p class="legend__item legend__item--protein">
+              <span class="legend__swatch" aria-hidden="true"></span>
+              <span
+                ><strong>Protein &amp; fibre first</strong> — the veg and the protein go in before any
+                carbohydrate</span
+              >
+            </p>
+          </div>
+
+          <figure class="chart">
+            <div class="chart__frame" data-role="chart" tabindex="0" aria-describedby="chart-help"></div>
+            <p class="visually-hidden" id="chart-help">
+              Use the left and right arrow keys to read the two curves minute by minute. Home and End
+              jump to the start and the end.
+            </p>
+            <figcaption class="chart__readout" data-role="readout" aria-live="polite"></figcaption>
+          </figure>
+
+          <div class="stats" data-role="stats"></div>
+
+          <p class="verdict" data-role="verdict"></p>
+
+          <details class="table-details">
+            <summary>Read the curve as a table</summary>
+            <div class="table-scroll">
+              <table class="curve-table" data-role="curve-table">
+                <caption>Blood glucose in mg/dL, every 20 minutes after the first bite.</caption>
+              </table>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ step 4 -->
+      <section class="step" id="trend" aria-labelledby="trend-heading">
+        <div class="step__head">
+          <p class="step__num">Step 4</p>
+          <h2 id="trend-heading">Where does this plate take your weight?</h2>
+          <p class="step__lead">
+            The curve above is about the next three hours. This is about the next year. Tell the page
+            enough to estimate what you burn in a day and it will compare that with eating like this
+            regularly.
+          </p>
+        </div>
+
+        <div class="trend-layout">
+          <form class="profile" data-role="profile" novalidate>
+            <div class="field">
+              <label for="weight">Weight</label>
+              <div class="field__input">
+                <input
+                  id="weight"
+                  name="weight"
+                  type="number"
+                  inputmode="decimal"
+                  min="30"
+                  max="250"
+                  step="0.5"
+                  value="70"
+                />
+                <span class="field__unit">kg</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="height">Height</label>
+              <div class="field__input">
+                <input
+                  id="height"
+                  name="height"
+                  type="number"
+                  inputmode="numeric"
+                  min="120"
+                  max="220"
+                  step="1"
+                  value="170"
+                />
+                <span class="field__unit">cm</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="age">Age</label>
+              <div class="field__input">
+                <input
+                  id="age"
+                  name="age"
+                  type="number"
+                  inputmode="numeric"
+                  min="15"
+                  max="100"
+                  step="1"
+                  value="25"
+                />
+                <span class="field__unit">years</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="sex">Sex</label>
+              <select id="sex" name="sex">
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="unspecified">Rather not say</option>
+              </select>
+            </div>
+            <div class="field field--wide">
+              <label for="activityLevel">Usual daily activity</label>
+              <select id="activityLevel" name="activityLevel"></select>
+            </div>
+            <div class="field">
+              <label for="mealsPerDay">Meals like this</label>
+              <div class="field__input">
+                <input
+                  id="mealsPerDay"
+                  name="mealsPerDay"
+                  type="number"
+                  inputmode="numeric"
+                  min="1"
+                  max="6"
+                  step="1"
+                  value="3"
+                />
+                <span class="field__unit">a day</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="goal">What you want</label>
+              <select id="goal" name="goal"></select>
+            </div>
+          </form>
+
+          <div class="trend-out">
+            <div class="trend-card" data-role="trend-card" aria-live="polite"></div>
+            <div class="advice" data-role="advice"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------------- sources -->
+      <section class="step" id="sources" aria-labelledby="sources-heading">
+        <div class="step__head">
+          <p class="step__num">The receipts</p>
+          <h2 id="sources-heading">Where the numbers came from, and what they can't tell you</h2>
+        </div>
+
+        <div class="sources-layout">
+          <div class="honesty">
+            <h3>Read this before you trust the curve</h3>
+            <ul>
+              <li>
+                This is a <strong>teaching model of a healthy adult</strong>, not a clinical simulator
+                and not medical advice. It has no idea who you are.
+              </li>
+              <li>
+                Real responses to the <em>same meal in the same person</em> vary from day to day, and
+                vary far more between people. Two people eating this plate would get two different
+                curves; a continuous glucose monitor is the only way to see yours.
+              </li>
+              <li>
+                The order effect here is calibrated to a study in <strong>prediabetes</strong> —
+                about a third off the peak. The original pilot in type 2 diabetes found a much bigger
+                effect, 73% off the area under the curve, and this page deliberately does
+                <em>not</em> use that headline number, because you probably are not that group.
+              </li>
+              <li>
+                Glycaemic index is a population average with a wide spread. White rice ranges from 48
+                to 92 depending on the cultivar. Treat every GI number here as "about".
+              </li>
+              <li>
+                The weight panel uses a linear 7,700 kcal per kilogram. That is reasonable for one
+                week and increasingly wrong after that, because what you burn falls as you lose mass.
+                It projects one week for exactly that reason.
+              </li>
+            </ul>
+          </div>
+
+          <div class="refs">
+            <h3>Sources</h3>
+            <ol class="refs__list">
+              <li>
+                Atkinson FS, Brand-Miller JC, Foster-Powell K, Buyken AE, Goletzke J.
+                <a href="https://pubmed.ncbi.nlm.nih.gov/34258626/"
+                  >International tables of glycemic index and glycemic load values 2021: a systematic
+                  review.</a
+                >
+                <em>Am J Clin Nutr</em> 2021;114(5):1625–32. — every GI value on this page.
+              </li>
+              <li>
+                Shukla AP, et al.
+                <a
+                  href="https://diabetesjournals.org/care/article/38/7/e98/30914/Food-Order-Has-a-Significant-Impact-on"
+                  >Food order has a significant impact on postprandial glucose and insulin levels.</a
+                >
+                <em>Diabetes Care</em> 2015;38(7):e98–9. — the original food-order pilot.
+              </li>
+              <li>
+                Shukla AP, et al.
+                <a href="https://dom-pubs.onlinelibrary.wiley.com/doi/abs/10.1111/dom.13503"
+                  >The impact of food order on postprandial glycaemic excursions in prediabetes.</a
+                >
+                <em>Diabetes Obes Metab</em> 2019;21(2):377–81. — the effect size this model uses.
+              </li>
+              <li>
+                Imai S, et al.
+                <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3674531/"
+                  >Eating vegetables before carbohydrates improves postprandial glucose
+                  excursions.</a
+                >
+                — the vegetables-first arm.
+              </li>
+              <li>
+                <a href="https://www.nature.com/articles/s41598-025-07312-y"
+                  >Positive impact of a 10-min walk immediately after glucose intake on postprandial
+                  glucose levels.</a
+                >
+                <em>Sci Rep</em> 2025. — the walk numbers, and the seated control peak of
+                181.9 mg/dL.
+              </li>
+              <li>
+                Buffey AJ, et al.
+                <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9325803/"
+                  >The acute effects of interrupting prolonged sitting with standing and
+                  light-intensity walking.</a
+                >
+                <em>Sports Med</em> 2022. — walking beats standing; standing barely beats sitting.
+              </li>
+              <li>
+                <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10987319/"
+                  >One minute of stair climbing and descending reduces postprandial insulin and
+                  glucose.</a
+                >
+                — the bodyweight-circuit numbers.
+              </li>
+              <li>
+                <a href="https://www.metabolismjournal.com/article/S0026-0495(23)00244-5/fulltext"
+                  >Continuous glucose monitoring in a healthy population.</a
+                >
+                <em>Metabolism</em> 2023. — the baseline, the peak range and the return to baseline
+                this page draws.
+              </li>
+              <li>
+                <a
+                  href="https://www.frontiersin.org/journals/endocrinology/articles/10.3389/fendo.2019.00144/full"
+                  >Impact of nutrient type and sequence on glucose tolerance.</a
+                >
+                <em>Front Endocrinol</em> 2019. — why a preload works at all.
+              </li>
+              <li>
+                Mifflin MD, St Jeor ST, et al. A new predictive equation for resting energy
+                expenditure in healthy individuals. <em>Am J Clin Nutr</em> 1990;51(2):241–7. — the
+                weight panel's engine.
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <footer class="site-footer">
+      <p>
+        <strong>After the Bite</strong> — an interactive explainer built for COMP4020 at the
+        Australian National University.
+      </p>
+      <p class="site-footer__small">
+        Not medical advice. If you are managing diabetes, your own monitor and your own clinician beat
+        any model on the internet, including this one.
+      </p>
+    </footer>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
