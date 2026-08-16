@@ -159,6 +159,42 @@ relax one, change the model, not the rule.
   header, which turned the brand name invisible. If a value is not a token, a
   theme switch is how you find out.
 
+### Render the page, then go looking for the empty space
+
+Every layout problem in this repo so far has been invisible in the source and
+obvious in a screenshot. So: **render it, then measure it.** Never call a layout
+done off the markup alone, and never trust "it looks fine" — measure, because the
+eye forgives a 250 px void that a measurement names immediately.
+
+Two numbers find almost all of it, and both are one `playwright-cli eval` away:
+
+1. **Blank horizontal strips.** Walk the text nodes and graphics, bucket their
+   boxes into 20 px bands down the page, and report any run of bands containing
+   no ink at all. Anything over ~100 px is a hole. Doubled padding at a section
+   boundary is the usual cause — a block's own `padding-bottom` plus the next
+   section's `padding-top`.
+2. **Dead columns.** For every two-column row, compare the two children's
+   heights. A short column beside a tall one is the single biggest source of
+   empty space on this page: the food library was 291 px shorter than the meal
+   card beside it, the weight form 266 px shorter than its output, the honesty
+   card 232 px shorter than the reference list.
+
+The fixes, in order of preference:
+
+- **Stop pairing mismatched blocks.** Give both the full width as stacked rows
+  and split each internally. That is how the meal card became plate | tally |
+  macros and the food grid went from four columns to eight.
+- **Make the shorter block wider and denser** — a 10-item list becomes
+  `columns: 2` and halves in height.
+- **Divide card grids evenly.** `auto-fill` ends rows ragged: eight activity
+  cards gave 5 + 3, leaving a third of a row empty. Count the items, pick an
+  explicit track count that divides them, and add a test so the next item added
+  fails loudly rather than going ragged.
+
+Text is the exception. A heading or a paragraph should keep its measure — 34ch
+for a headline, ~60ch for body — and the space to its right is correct, not a
+hole to fill.
+
 ### The sensors this repo adds
 
 Beyond the shipped roster: `spec/contrast.test.ts` computes WCAG 2.1 contrast

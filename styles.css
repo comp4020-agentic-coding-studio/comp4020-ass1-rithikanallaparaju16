@@ -470,6 +470,7 @@ h1 {
 }
 
 .step--last {
+  padding-bottom: 0;
   border-left-color: transparent;
 }
 
@@ -1823,7 +1824,15 @@ h1 {
   }
 
   .trend-layout {
-    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field--wide {
+    grid-column: span 2;
   }
 
   .sources-layout {
@@ -1862,9 +1871,35 @@ h1 {
     margin-top: 0;
   }
 
-  .builder {
-    grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
-    gap: var(--gutter);
+  .meal {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 16px var(--gutter);
+    align-items: start;
+  }
+
+  .meal__figures {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 12px var(--gutter);
+    align-items: start;
+  }
+
+  .tally__items {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .macros {
+    grid-row: 1;
+    grid-column: 2;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .meal__actions {
+    grid-row: 2;
+    grid-column: 2;
   }
 
   .activities {
@@ -1896,12 +1931,46 @@ h1 {
     grid-column: 1 / -1;
   }
 
-  .meal {
-    display: flex;
+  .trend-out {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--gutter);
+    align-items: start;
+  }
+
+  .refs__list {
+    display: block;
+    columns: 2;
+    column-gap: var(--gutter);
+  }
+
+  .refs__list li {
+    margin-bottom: 12px;
+    break-inside: avoid;
+  }
+
+  /* Ten references halved still leaves the shorter honesty card beside it, so
+     the two share one row of the grid instead of sitting side by side. */
+  .sources-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .honesty ul {
+    columns: 2;
+    column-gap: var(--gutter);
+  }
+
+  .honesty li {
+    margin-bottom: 12px;
+    break-inside: avoid;
   }
 
   .plate {
-    max-width: 250px;
+    max-width: 240px;
+  }
+
+  .profile {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .step {
