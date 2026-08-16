@@ -56,40 +56,39 @@ function contrast(a: string, b: string): number {
 
 /** Every foreground/background pair the stylesheet actually puts together. */
 const NORMAL_TEXT: [string, string, string][] = [
-  ["body copy", "ink", "bg"],
-  ["body copy on a card", "ink", "surface"],
-  ["secondary copy", "ink-soft", "bg"],
-  ["secondary copy on a card", "ink-soft", "surface"],
-  ["muted copy", "ink-faint", "bg"],
-  ["muted copy on a card", "ink-faint", "surface"],
-  ["muted copy on a sunk panel", "ink-faint", "surface-sunk"],
-  ["links and the eyebrow", "green", "bg"],
-  ["links on a card", "green", "surface"],
-  ["the protein reading", "series-protein", "green-wash"],
-  ["step numbers and the carbs reading", "amber", "bg"],
-  ["the carbs reading on a card", "amber", "surface"],
-  ["the evidence note", "ink-soft", "amber-wash"],
-  ["the GI tag", "amber", "amber-wash"],
-  ["the verdict", "ink", "green-wash"],
+  ["body copy", "on-surface", "background"],
+  ["body copy on a card", "on-surface", "surface"],
+  ["secondary copy", "on-surface-variant", "background"],
+  ["secondary copy on a card", "on-surface-variant", "surface"],
+  ["secondary copy on a sunk panel", "on-surface-variant", "surface-container"],
+  ["links and the eyebrow", "secondary", "background"],
+  ["links on a card", "secondary", "surface"],
+  ["the protein reading", "series-protein", "band-target"],
+  ["step numbers and the carbs reading", "tertiary-text", "background"],
+  ["the carbs reading on a card", "tertiary-text", "surface"],
+  ["the evidence note", "on-surface-variant", "band-spike"],
+  ["the GI tag", "tertiary-text", "tertiary-fixed"],
+  ["the verdict", "on-surface", "band-target"],
+  ["the chart peak labels", "tertiary-text", "band-spike"],
 ];
 
 /** Buttons and pressed chips: white text on a solid fill. */
 const ON_FILL: [string, string, string][] = [
-  ["primary button", "surface", "ink"],
-  ["pressed category chip", "surface", "ink"],
-  ["pressed diet chip", "surface", "green"],
-  ["the serve-count badge", "surface", "green"],
+  ["primary button", "on-primary", "primary"],
+  ["pressed category chip", "on-primary", "primary"],
+  ["pressed diet chip", "on-secondary", "secondary"],
+  ["the serve-count badge", "on-secondary", "secondary"],
 ];
 
 /** Lines, borders and focus rings only have to clear 3:1. */
 const NON_TEXT: [string, string, string][] = [
-  ["the focus ring", "green", "bg"],
-  ["the focus ring on a card", "green", "surface"],
-  ["the protein curve", "series-protein", "green-wash"],
-  ["the carbs curve", "series-carbs", "green-wash"],
-  ["the carbs curve in the spike band", "series-carbs", "amber-wash"],
-  ["the 140 rule", "series-carbs", "green-wash"],
-  ["an input or button border", "border-input", "surface"],
+  ["the focus ring", "secondary", "background"],
+  ["the focus ring on a card", "secondary", "surface"],
+  ["the protein curve", "series-protein", "band-target"],
+  ["the carbs curve", "series-carbs", "band-target"],
+  ["the carbs curve in the spike band", "series-carbs", "band-spike"],
+  ["the 140 rule", "series-carbs", "band-target"],
+  ["an input or button border", "outline", "surface"],
 ];
 
 describe("colour contrast (WCAG 2.1 AA)", () => {

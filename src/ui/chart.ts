@@ -1,5 +1,18 @@
 // The glucose chart, hand-rolled as SVG.
 //
+// DESIGN.md calls this "the centerpiece of the system", so it is built to be
+// exactly that: the two lines are the loudest thing on the page and everything
+// else — grid, bands, axes — is tuned down until it is only just readable.
+//
+// From DESIGN.md, deliberately:
+// - 3 px curve, minimal high-transparency gridlines, 5% area fill matching the
+//   line colour.
+// - "The curve should transition colour dynamically: green below 140, amber
+//   above." That rule is written for a single curve; with two *named* series,
+//   recolouring a whole line would destroy the thing the page compares. The
+//   intent — flag the part of a curve that is in spike territory — is honoured
+//   instead by an amber emphasis drawn under the above-140 stretch of each line.
+//
 // The chart is measured in real CSS pixels rather than drawn into a fixed
 // viewBox and scaled. A fixed viewBox is the tempting shortcut and it wrecks the
 // phone viewport: a 760-unit viewBox squeezed into a 350 px column renders
@@ -46,10 +59,11 @@ export function padsFor(width: number): {
 } {
   const narrow = width < 460;
   return {
-    padLeft: narrow ? 34 : 46,
-    padRight: narrow ? 12 : 18,
-    padTop: narrow ? 18 : 24,
-    padBottom: narrow ? 40 : 48,
+    padLeft: narrow ? 32 : 44,
+    // Room at the top for the peak labels drawn on the lines themselves.
+    padRight: narrow ? 10 : 16,
+    padTop: narrow ? 26 : 34,
+    padBottom: narrow ? 34 : 44,
   };
 }
 
@@ -71,26 +85,55 @@ export function geometryFor(sim: Simulation, width: number, height: number): Cha
   };
 }
 
+function points(series: Series, g: ChartGeometry): string[] {
+  return series.points.map((p) => `${g.x(p.minutes).toFixed(1)} ${g.y(p.mgdl).toFixed(1)}`);
+}
+
 function linePath(series: Series, g: ChartGeometry): string {
-  return series.points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${g.x(p.minutes).toFixed(1)} ${g.y(p.mgdl).toFixed(1)}`)
+  return points(series, g)
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p}`)
     .join(" ");
+}
+
+/** The 5% fill under a curve, closed down to the axis. DESIGN.md, area fill. */
+function areaPath(series: Series, g: ChartGeometry): string {
+  const bottom = (g.height - g.padBottom).toFixed(1);
+  const first = g.x(0).toFixed(1);
+  const last = g.x(WINDOW_MIN).toFixed(1);
+  return `M${first} ${bottom} L${points(series, g).join(" L")} L${last} ${bottom} Z`;
 }
 
 /**
  * The band between the two curves: the glucose the visitor never had, drawn as
- * a shape rather than described in a caption.
+ * a shape rather than described in a caption. This is the argument of the whole
+ * page, so it gets more ink than either area fill.
  */
 function betweenPath(sim: Simulation, g: ChartGeometry): string {
-  const high = sim.series["carbs-sugar-first"].points;
-  const low = sim.series["protein-fibre-first"].points;
-  const forward = high.map(
-    (p, i) => `${i === 0 ? "M" : "L"}${g.x(p.minutes).toFixed(1)} ${g.y(p.mgdl).toFixed(1)}`,
-  );
-  const back = [...low]
-    .reverse()
-    .map((p) => `L${g.x(p.minutes).toFixed(1)} ${g.y(p.mgdl).toFixed(1)}`);
-  return `${forward.join(" ")} ${back.join(" ")} Z`;
+  const forward = points(sim.series["carbs-sugar-first"], g);
+  const back = [...points(sim.series["protein-fibre-first"], g)].reverse();
+  return `M${forward.join(" L")} L${back.join(" L")} Z`;
+}
+
+/**
+ * The stretches of a line that sit above 140. Returned as separate sub-paths so
+ * a gap in spike territory does not get bridged by a straight line.
+ */
+function spikePath(series: Series, g: ChartGeometry): string {
+  const runs: string[][] = [];
+  let run: string[] = [];
+  for (const p of series.points) {
+    if (p.mgdl > TARGET_CEILING_MG_DL) {
+      run.push(`${g.x(p.minutes).toFixed(1)} ${g.y(p.mgdl).toFixed(1)}`);
+    } else if (run.length) {
+      runs.push(run);
+      run = [];
+    }
+  }
+  if (run.length) runs.push(run);
+  return runs
+    .filter((r) => r.length > 1)
+    .map((r) => `M${r.join(" L")}`)
+    .join(" ");
 }
 
 /**
@@ -119,7 +162,7 @@ function gridLines(g: ChartGeometry): string {
           }" y2="${y}" />`;
       return [
         line,
-        `<text class="chart__ytick" x="${g.padLeft - 8}" y="${y}" dy="0.32em" text-anchor="end">${v}</text>`,
+        `<text class="chart__ytick" x="${g.padLeft - 7}" y="${y}" dy="0.32em" text-anchor="end">${v}</text>`,
       ];
     })
     .join("");
@@ -130,19 +173,84 @@ function xAxis(g: ChartGeometry): string {
   const step = plotW < 380 ? 60 : 30;
   const parts: string[] = [];
   for (let t = 0; t <= WINDOW_MIN; t += step) {
-    const x = g.x(t).toFixed(1);
     parts.push(
-      `<line class="chart__grid chart__grid--v" x1="${x}" y1="${g.padTop}" x2="${x}" y2="${g.height - g.padBottom}" />`,
-      `<text class="chart__xtick" x="${x}" y="${g.height - g.padBottom + 18}" text-anchor="middle">${t}</text>`,
+      `<text class="chart__xtick" x="${g.x(t).toFixed(1)}" y="${
+        g.height - g.padBottom + 16
+      }" text-anchor="middle">${t}</text>`,
     );
   }
   parts.push(
-    `<text class="chart__axislabel" x="${g.padLeft + plotW / 2}" y="${g.height - 8}" text-anchor="middle">minutes after the first bite</text>`,
+    `<text class="chart__axislabel" x="${g.padLeft + plotW / 2}" y="${
+      g.height - 6
+    }" text-anchor="middle">minutes after the first bite</text>`,
   );
   return parts.join("");
 }
 
-export function renderChart(sim: Simulation, width: number, height: number, scrubIndex: number | null): string {
+/**
+ * Labels drawn on the lines themselves. Without these the chart depends on a
+ * legend, and the legend scrolls away the moment the chart goes sticky on a
+ * phone — at which point two coloured lines mean nothing.
+ */
+function peakLabels(sim: Simulation, g: ChartGeometry, narrow: boolean): string {
+  const carbs = sim.series["carbs-sugar-first"];
+  const protein = sim.series["protein-fibre-first"];
+  if (sim.isEmpty || carbs.peakMin === 0) return "";
+
+  const left = g.padLeft + 4;
+  const right = g.width - g.padRight - 4;
+  const clamp = (x: number) => Math.min(right - 46, Math.max(left + 46, x));
+
+  const identical = Math.round(carbs.peakMgDl) === Math.round(protein.peakMgDl);
+  const label = (x: number, y: number, kind: string, text: string, anchor = "middle") =>
+    `<text class="chart__label chart__label--${kind}" x="${x.toFixed(1)}" y="${y.toFixed(
+      1,
+    )}" text-anchor="${anchor}" paint-order="stroke fill">${text}</text>`;
+
+  if (identical) {
+    return label(
+      clamp(g.x(carbs.peakMin)),
+      Math.max(g.padTop + 11, g.y(carbs.peakMgDl) - 13),
+      "both",
+      `both orders · ${Math.round(carbs.peakMgDl)}`,
+    );
+  }
+
+  // The carbs label goes above its peak, into the empty spike band.
+  const carbsLabel = label(
+    clamp(g.x(carbs.peakMin)),
+    Math.max(g.padTop + 11, g.y(carbs.peakMgDl) - 14),
+    "carbs",
+    narrow
+      ? `carbs first · ${Math.round(carbs.peakMgDl)}`
+      : `carbs &amp; sugar first · ${Math.round(carbs.peakMgDl)}`,
+  );
+
+  // The protein label goes down-and-LEFT of its peak, ending just before it.
+  // Centring it under the peak put it straight through the carbs curve on its
+  // way down — which a white halo makes readable but not clean. Left of the
+  // peak is open space under both rising limbs.
+  const proteinX = g.x(protein.peakMin) - 10;
+  const fitsLeft = proteinX - (narrow ? 105 : 150) > g.padLeft;
+  const proteinLabel = label(
+    fitsLeft ? proteinX : g.x(protein.peakMin) + 10,
+    Math.min(g.height - g.padBottom - 8, g.y(protein.peakMgDl) + 20),
+    "protein",
+    narrow
+      ? `protein first · ${Math.round(protein.peakMgDl)}`
+      : `protein &amp; fibre first · ${Math.round(protein.peakMgDl)}`,
+    fitsLeft ? "end" : "start",
+  );
+
+  return carbsLabel + proteinLabel;
+}
+
+export function renderChart(
+  sim: Simulation,
+  width: number,
+  height: number,
+  scrubIndex: number | null,
+): string {
   const g = geometryFor(sim, width, height);
   const right = g.width - g.padRight;
   const bottom = g.height - g.padBottom;
@@ -153,23 +261,41 @@ export function renderChart(sim: Simulation, width: number, height: number, scru
   const yFloor = g.y(HYPO_FLOOR_MG_DL);
   const y140 = g.y(TARGET_CEILING_MG_DL);
   const yBase = g.y(sim.baselineMgDl);
+  const plotW = (right - g.padLeft).toFixed(1);
 
   const bands = [
     // Why the curve stops at 70: below here is hypoglycaemia, which a meal
     // cannot cause. Drawing the forbidden zone makes the floor legible.
-    `<rect class="chart__band chart__band--hypo" x="${g.padLeft}" y="${yFloor.toFixed(1)}" width="${(right - g.padLeft).toFixed(1)}" height="${Math.max(0, bottom - yFloor).toFixed(1)}" />`,
-    `<rect class="chart__band chart__band--target" x="${g.padLeft}" y="${y140.toFixed(1)}" width="${(right - g.padLeft).toFixed(1)}" height="${Math.max(0, yFloor - y140).toFixed(1)}" />`,
-    `<rect class="chart__band chart__band--spike" x="${g.padLeft}" y="${g.padTop}" width="${(right - g.padLeft).toFixed(1)}" height="${Math.max(0, y140 - g.padTop).toFixed(1)}" />`,
+    `<rect class="chart__band chart__band--hypo" x="${g.padLeft}" y="${yFloor.toFixed(
+      1,
+    )}" width="${plotW}" height="${Math.max(0, bottom - yFloor).toFixed(1)}" />`,
+    `<rect class="chart__band chart__band--target" x="${g.padLeft}" y="${y140.toFixed(
+      1,
+    )}" width="${plotW}" height="${Math.max(0, yFloor - y140).toFixed(1)}" />`,
+    `<rect class="chart__band chart__band--spike" x="${g.padLeft}" y="${g.padTop}" width="${plotW}" height="${Math.max(
+      0,
+      y140 - g.padTop,
+    ).toFixed(1)}" />`,
   ].join("");
 
-  const markers = [
-    `<line class="chart__rule chart__rule--floor" x1="${g.padLeft}" y1="${yFloor.toFixed(1)}" x2="${right}" y2="${yFloor.toFixed(1)}" />`,
-    `<line class="chart__rule chart__rule--base" x1="${g.padLeft}" y1="${yBase.toFixed(1)}" x2="${right}" y2="${yBase.toFixed(1)}" />`,
-    `<line class="chart__rule chart__rule--ceiling" x1="${g.padLeft}" y1="${y140.toFixed(1)}" x2="${right}" y2="${y140.toFixed(1)}" />`,
+  const rules = [
+    `<line class="chart__rule chart__rule--floor" x1="${g.padLeft}" y1="${yFloor.toFixed(
+      1,
+    )}" x2="${right}" y2="${yFloor.toFixed(1)}" />`,
+    `<line class="chart__rule chart__rule--base" x1="${g.padLeft}" y1="${yBase.toFixed(
+      1,
+    )}" x2="${right}" y2="${yBase.toFixed(1)}" />`,
+    `<line class="chart__rule chart__rule--ceiling" x1="${g.padLeft}" y1="${y140.toFixed(
+      1,
+    )}" x2="${right}" y2="${y140.toFixed(1)}" />`,
     narrow
       ? ""
-      : `<text class="chart__note" x="${right - 6}" y="${(y140 - 7).toFixed(1)}" text-anchor="end">140 — spike territory</text>
-         <text class="chart__note" x="${right - 6}" y="${(yFloor + 15).toFixed(1)}" text-anchor="end">70 — below here is hypoglycaemia</text>`,
+      : `<text class="chart__note" x="${right - 4}" y="${(y140 - 6).toFixed(
+          1,
+        )}" text-anchor="end">140 — spike territory</text>
+         <text class="chart__note" x="${right - 4}" y="${(yFloor + 13).toFixed(
+           1,
+         )}" text-anchor="end">70 — below here is hypoglycaemia</text>`,
   ].join("");
 
   const scrub =
@@ -182,14 +308,20 @@ export function renderChart(sim: Simulation, width: number, height: number, scru
           const x = g.x(cp.minutes).toFixed(1);
           return `<g class="chart__scrub">
             <line x1="${x}" y1="${g.padTop}" x2="${x}" y2="${bottom}" />
-            <circle class="chart__dot chart__dot--carbs" cx="${x}" cy="${g.y(cp.mgdl).toFixed(1)}" r="5" />
-            <circle class="chart__dot chart__dot--protein" cx="${x}" cy="${g.y(pp.mgdl).toFixed(1)}" r="5" />
+            <circle class="chart__dot chart__dot--carbs" cx="${x}" cy="${g
+              .y(cp.mgdl)
+              .toFixed(1)}" r="5" />
+            <circle class="chart__dot chart__dot--protein" cx="${x}" cy="${g
+              .y(pp.mgdl)
+              .toFixed(1)}" r="5" />
           </g>`;
         })();
 
   const peakDot = (s: Series, kind: string) =>
     s.peakMin > 0
-      ? `<circle class="chart__peak chart__peak--${kind}" cx="${g.x(s.peakMin).toFixed(1)}" cy="${g.y(s.peakMgDl).toFixed(1)}" r="4" />`
+      ? `<circle class="chart__peak chart__peak--${kind}" cx="${g
+          .x(s.peakMin)
+          .toFixed(1)}" cy="${g.y(s.peakMgDl).toFixed(1)}" r="4.5" />`
       : "";
 
   return `<svg class="chart__svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"
@@ -197,15 +329,18 @@ export function renderChart(sim: Simulation, width: number, height: number, scru
     ${bands}
     ${gridLines(g)}
     ${xAxis(g)}
-    ${markers}
+    <path class="chart__area chart__area--protein" d="${areaPath(protein, g)}" />
     <path class="chart__between" d="${betweenPath(sim, g)}" />
+    ${rules}
+    <path class="chart__spike" d="${spikePath(carbs, g)}" />
+    <path class="chart__spike" d="${spikePath(protein, g)}" />
     <path class="chart__line chart__line--carbs" d="${linePath(carbs, g)}" />
     <path class="chart__line chart__line--protein" d="${linePath(protein, g)}" />
     ${peakDot(carbs, "carbs")}
     ${peakDot(protein, "protein")}
+    ${peakLabels(sim, g, narrow)}
     ${scrub}
     <line class="chart__axis" x1="${g.padLeft}" y1="${bottom}" x2="${right}" y2="${bottom}" />
-    <line class="chart__axis" x1="${g.padLeft}" y1="${g.padTop}" x2="${g.padLeft}" y2="${bottom}" />
   </svg>`;
 }
 

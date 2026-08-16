@@ -84,7 +84,9 @@ const dom = {
   activityEvidence: ref("activity-evidence"),
   run: ref<HTMLButtonElement>("run"),
   runHint: ref("run-hint"),
-  curvePanel: ref("curve-panel"),
+  stage: ref("stage"),
+  stageSub: ref("stage-sub"),
+  results: ref("results"),
   chart: ref("chart"),
   readout: ref("readout"),
   stats: ref("stats"),
@@ -334,13 +336,9 @@ function drawChart(sim: Simulation): void {
 
 function renderReadout(sim: Simulation): void {
   if (state.scrubIndex === null) {
-    dom.readout.innerHTML = sim.isEmpty
+    dom.readout.textContent = sim.isEmpty
       ? "Nothing on the plate, so nothing to absorb. Both lines sit on the fasting baseline."
-      : `Hover, drag, or focus the chart and use the arrow keys to read any minute. Peaks: <strong class="is-carbs">${round(
-          sim.series["carbs-sugar-first"].peakMgDl,
-        )}</strong> carbs first, <strong class="is-protein">${round(
-          sim.series["protein-fibre-first"].peakMgDl,
-        )}</strong> protein first.`;
+      : "Drag across the chart, or focus it and press ← →, to read any minute.";
     return;
   }
   const carbs = sim.series["carbs-sugar-first"].points[state.scrubIndex];
@@ -454,13 +452,19 @@ function renderTable(sim: Simulation): void {
 }
 
 function renderCurve(): void {
-  if (!state.hasRun) return;
+  if (!state.hasRun) {
+    drawChart(simulate({ items: [], activityId: state.activityId }));
+    dom.readout.textContent =
+      "Flat at the 90 mg/dL fasting baseline. Build a plate, then press the button.";
+    return;
+  }
   const sim = currentSimulation();
   drawChart(sim);
   renderReadout(sim);
   renderStats(sim);
   renderVerdict(sim);
   renderTable(sim);
+  dom.stageSub.textContent = `Two lines from one plate — same food, same grams, same calories. Afterwards you ${sim.activity.label.toLowerCase()}.`;
 }
 
 // ------------------------------------------------------------------- step 4
@@ -597,19 +601,15 @@ dom.activities.addEventListener("change", (event) => {
 });
 
 dom.run.addEventListener("click", () => {
-  const first = !state.hasRun;
   state.hasRun = true;
-  dom.curvePanel.hidden = false;
-  dom.run.textContent = "Redraw the curve";
+  dom.results.hidden = false;
+  dom.run.textContent = "Redraw the curves";
   dom.runHint.textContent =
     "Change the plate or what you do afterwards and both curves redraw straight away.";
   renderCurve();
-  if (first) {
-    dom.curvePanel.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "nearest",
-    });
-  }
+  // No scrollIntoView: the chart is pinned above the controls, so it is already
+  // on screen. Scrolling here would fight the sticky panel it scrolls towards.
+  measureChrome();
 });
 
 // --------------------------------------------------------------- the scrubber
@@ -713,16 +713,39 @@ dom.profile.addEventListener("submit", (event) => event.preventDefault());
 
 // ----------------------------------------------------------------- lifecycle
 
+/**
+ * The sticky header and the sticky chart both sit between the top of the
+ * viewport and the content, so every in-page anchor has to clear them. Measuring
+ * beats guessing: the header wraps at some widths and the chart panel changes
+ * height at the breakpoints, and a hard-coded scroll-margin was already hiding
+ * section headings behind the header once.
+ */
+function measureChrome(): void {
+  const root = document.documentElement;
+  const header = document.querySelector<HTMLElement>(".site-header");
+  if (header) {
+    root.style.setProperty("--header-h", `${Math.round(header.getBoundingClientRect().height)}px`);
+  }
+  const stuck = getComputedStyle(dom.stage).position === "sticky";
+  root.style.setProperty(
+    "--stage-h",
+    stuck ? `${Math.round(dom.stage.getBoundingClientRect().height)}px` : "0px",
+  );
+}
+
 let resizeFrame = 0;
 const observer = new ResizeObserver(() => {
-  if (!state.hasRun) return;
   // Guard against the render resizing the observed box and looping forever.
   const { width, height } = chartSize();
   if (width === lastChartSize.width && height === lastChartSize.height) return;
   cancelAnimationFrame(resizeFrame);
-  resizeFrame = requestAnimationFrame(renderCurve);
+  resizeFrame = requestAnimationFrame(() => {
+    renderCurve();
+    measureChrome();
+  });
 });
 observer.observe(dom.chart);
+new ResizeObserver(measureChrome).observe(document.body);
 
 buildCategories();
 updateCategorySelection();
@@ -731,6 +754,8 @@ buildPresets();
 buildActivities();
 updateActivitySelection();
 buildProfileSelects();
+measureChrome();
+renderCurve();
 
 // Start from a real plate rather than an empty demonstration of nothing. One
 // press of "Clear the plate" undoes it.

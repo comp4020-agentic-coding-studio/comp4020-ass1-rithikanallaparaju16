@@ -8,6 +8,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
+import { FOODS_BY_ID } from "../src/data/foods";
+import { simulate } from "../src/model/glucose";
+import { renderChart } from "../src/ui/chart";
 
 const DIST = resolve("dist");
 const doc = new JSDOM(readFileSync(resolve(DIST, "index.html"), "utf8")).window.document;
@@ -38,8 +41,9 @@ describe("the deployed page", () => {
 
   it("has a skip link to the content", () => {
     const skip = doc.querySelector<HTMLAnchorElement>(".skip-link");
-    expect(skip?.getAttribute("href")).toBe("#main");
-    expect(doc.querySelector("#main")).toBeTruthy();
+    const target = skip?.getAttribute("href")?.slice(1) ?? "";
+    expect(target, "the skip link needs a fragment target").toBeTruthy();
+    expect(doc.getElementById(target), `skip link points at #${target}, which does not exist`).toBeTruthy();
   });
 });
 
@@ -72,8 +76,17 @@ describe("the visitor can do something that changes what they see", () => {
     expect(run?.textContent?.trim()).toBeTruthy();
   });
 
-  it("hides the curve panel until it is asked for", () => {
-    expect(doc.querySelector('[data-role="curve-panel"]')?.hasAttribute("hidden")).toBe(true);
+  it("keeps the chart on the page from the first paint", () => {
+    // The chart is the subject, not a reward for pressing a button: it ships
+    // visible, showing a flat fasting baseline until there is a meal to draw.
+    const stage = doc.querySelector('[data-role="stage"]');
+    expect(stage, "the chart panel must exist").toBeTruthy();
+    expect(stage?.hasAttribute("hidden"), "the chart must never start hidden").toBe(false);
+    expect(stage?.contains(doc.querySelector('[data-role="chart"]'))).toBe(true);
+  });
+
+  it("holds the numeric results back until the button is pressed", () => {
+    expect(doc.querySelector('[data-role="results"]')?.hasAttribute("hidden")).toBe(true);
   });
 });
 
@@ -196,5 +209,63 @@ describe("the build is a static, self-contained site", () => {
       const id = link.getAttribute("href")?.slice(1) ?? "";
       expect(doc.getElementById(id), `${link.getAttribute("href")} goes nowhere`).toBeTruthy();
     }
+  });
+});
+
+describe("the chart is the centrepiece, per DESIGN.md", () => {
+  const css = readFileSync(resolve("styles.css"), "utf8");
+
+  it("gives the curve the right 7 of 12 columns and the plate the left 5", () => {
+    // DESIGN.md, Layout: "The 'Plate' area occupies the left 5 columns, while
+    // the 'Glucose Curve' occupies the right 7."
+    expect(css).toMatch(/\.studio\s*\{[^}]*grid-template-columns:\s*5fr 7fr/u);
+  });
+
+  it("pins the chart so the lines never leave the screen", () => {
+    // The whole argument is a comparison between two lines. A chart you have to
+    // scroll back to cannot be the subject of the page.
+    expect(css).toMatch(/\.stage\s*\{[^}]*position:\s*sticky/u);
+    expect(css).toMatch(/\.studio__output\s*\{[^}]*position:\s*sticky/u);
+  });
+
+  it("keeps the container at the width DESIGN.md specifies", () => {
+    expect(css).toMatch(/--container:\s*1200px/u);
+  });
+
+  it("labels both curves on the lines, not only in a legend", () => {
+    // The legend scrolls away once the chart goes sticky on a phone, at which
+    // point two coloured lines would mean nothing on their own. Assert on the
+    // rendered SVG rather than on the source: what matters is what ships.
+    const sim = simulate({
+      items: [
+        { food: FOODS_BY_ID.get("white-rice")!, units: 2 },
+        { food: FOODS_BY_ID.get("chicken-breast")!, units: 1 },
+        { food: FOODS_BY_ID.get("broccoli")!, units: 1 },
+      ],
+      activityId: "sit",
+    });
+    const svg = renderChart(sim, 700, 340, null);
+    expect(svg).toMatch(/chart__label--carbs/u);
+    expect(svg).toMatch(/chart__label--protein/u);
+    expect(svg, "each label carries its own peak value").toMatch(
+      new RegExp(`carbs &amp; sugar first · ${Math.round(sim.series["carbs-sugar-first"].peakMgDl)}`, "u"),
+    );
+    expect(css).toMatch(/\.chart__label\s*\{/u);
+  });
+
+  it("says so plainly when reordering the plate changes nothing", () => {
+    // A cola, white bread and a donut: nothing on it can be eaten first, so
+    // both series are the same line and the chart must not imply two.
+    const sim = simulate({
+      items: [
+        { food: FOODS_BY_ID.get("cola")!, units: 1 },
+        { food: FOODS_BY_ID.get("white-bread")!, units: 2 },
+        { food: FOODS_BY_ID.get("donut")!, units: 1 },
+      ],
+      activityId: "sit",
+    });
+    const svg = renderChart(sim, 700, 340, null);
+    expect(svg).toMatch(/both orders ·/u);
+    expect(svg).not.toMatch(/chart__label--carbs/u);
   });
 });
