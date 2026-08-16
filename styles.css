@@ -1826,6 +1826,32 @@ h1 {
    is food on the plate the curve has nothing to say, so the space is worth more
    to the plate than to a chart of a flat line. */
 @media (width >= 1000px) {
+  /* The masthead runs the headline against its own explanation instead of
+     leaving the right half of the fold empty. */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: var(--stack-sm) var(--stack-lg);
+    align-items: start;
+  }
+
+  .hero .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .hero h1 {
+    grid-row: 2 / span 2;
+    grid-column: 1;
+    max-width: none;
+    font-size: 56px;
+    line-height: 62px;
+  }
+
+  .hero .lede {
+    grid-column: 2;
+    margin-top: 0;
+  }
+
   .builder {
     grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
     gap: var(--gutter);
